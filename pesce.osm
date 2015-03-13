@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='true' generator='JOSM'>
+  <node id='-295' action='modify' visible='true' lat='45.76942129915' lon='10.9997541458'>
+    <tag k='name' v='naso' />
+  </node>
+  <node id='-294' visible='true' lat='45.7694245701' lon='10.999758835' />
+  <node id='-293' visible='true' lat='45.76942820445' lon='10.9997630032' />
+  <node id='-292' visible='true' lat='45.76942893135' lon='10.9997718606' />
+  <node id='-291' visible='true' lat='45.76942711415' lon='10.9997833231' />
+  <node id='-290' visible='true' lat='45.76942420665' lon='10.99978697025' />
+  <node id='-289' visible='true' lat='45.7694202088' lon='10.99978957535' />
+  <node id='-288' visible='true' lat='45.76942529695' lon='10.99979582765' />
+  <node id='-287' action='modify' visible='true' lat='45.7694125766' lon='10.99979582765'>
+    <tag k='name' v='coda' />
+  </node>
+  <node id='-286' visible='true' lat='45.76941657445' lon='10.9997900964' />
+  <node id='-285' visible='true' lat='45.7694114863' lon='10.99978540715' />
+  <node id='-284' visible='true' lat='45.76940857875' lon='10.9997770708' />
+  <node id='-283' visible='true' lat='45.7694089422' lon='10.9997697765' />
+  <node id='-282' visible='true' lat='45.7694118497' lon='10.99976248215' />
+  <node id='-281' visible='true' lat='45.76941512065' lon='10.99975570885' />
+  <way id='-280' action='modify' visible='true'>
+    <nd ref='-281' />
+    <nd ref='-282' />
+    <nd ref='-283' />
+    <nd ref='-284' />
+    <nd ref='-285' />
+    <nd ref='-286' />
+    <nd ref='-287' />
+    <nd ref='-288' />
+    <nd ref='-289' />
+    <nd ref='-290' />
+    <nd ref='-291' />
+    <nd ref='-292' />
+    <nd ref='-293' />
+    <nd ref='-294' />
+    <nd ref='-295' />
+    <nd ref='-281' />
+    <tag k='name' v='pesce' />
+  </way>
+</osm>

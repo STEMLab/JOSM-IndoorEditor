@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="Pesce" default="dist" basedir=".">
+    <!-- enter the SVN commit message -->
+    <property name="commit.message" value="Initial commit"/>
+    <!-- enter the *lowest* JOSM version this plugin is currently compatible with -->
+    <property name="plugin.main.version" value="7001"/>
+   	
+    <!-- Configure these properties (replace "..." accordingly).
+         See http://josm.openstreetmap.de/wiki/DevelopersGuide/DevelopingPlugins
+    -->
+    <property name="plugin.author" value="Martino Salvetti;"/>
+    <property name="plugin.class" value="it.trilogis.josm.pesce.PescePlugin"/>
+    <property name="plugin.description" value="G.N.D.N"/>
+    <property name="plugin.icon" value="images/preferences/pesce.png"/>
+    <property name="plugin.link" value="http://dev/null"/>
+    <property name="plugin.canloadatruntime" value="true"/>
+
+    <!-- ** include targets that all plugins have in common ** -->
+    <import file="../build-common.xml"/>                
+                
+</project>
