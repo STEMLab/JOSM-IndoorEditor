@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package it.trilogis.josm.pesce;
 
+import net.opengis.indoorgml.v_1_0.core.StateType;
+
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapFrame;
@@ -25,6 +27,7 @@ public class PescePlugin extends Plugin {
         FileImporter importer = new PesceImporter();
         
         ExtensionFileFilter.importers.add(importer);
+        
     }
 
     /* ???

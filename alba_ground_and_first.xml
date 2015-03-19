@@ -1,0 +1,1335 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<IndoorFeatures xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.opengis.net/indoorgml/1.0/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" gml:id="IFS">
+	<MultiLayeredGraph gml:id="MLG">
+		<spaceLayers gml:id="SLs">
+			<spaceLayerMember>
+				<SpaceLayer gml:id="walking">
+					<nodes gml:id="Nodes">
+						<stateMember>
+							<State gml:id="S1">
+								<gml:description xlink:type="simple">Stairwell</gml:description>
+								<connects>
+									<Transition xlink:href="#T010" gml:id="T010_0"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T001" gml:id="T001_1"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P1">
+										<gml:pos>46.071584048012 23.556150930059 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S501">
+								<gml:description xlink:type="simple">DoorStairwell</gml:description>
+								<connects>
+									<Transition xlink:href="#T010" gml:id="T010_2"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T014" gml:id="T014_3"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P501">
+										<gml:pos>46.071571978071 23.556169705523 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S502">
+								<gml:description xlink:type="simple">DoorElevator</gml:description>
+								<connects>
+									<Transition xlink:href="#T012" gml:id="T012_4"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T013" gml:id="T013_5"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P502">
+										<gml:pos>46.071601482371 23.556196192337 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S2">
+								<gml:description xlink:type="simple">Elevator</gml:description>
+								<connects>
+									<Transition xlink:href="#T012" gml:id="T012_6"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T002" gml:id="T002_7"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P2">
+										<gml:pos>46.071611540654 23.556200886202 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S510">
+								<gml:description xlink:type="simple">HallwaySASDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T015" gml:id="T015_8"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T016" gml:id="T016_9"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P510">
+										<gml:pos>46.071569966415 23.556215638352 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S10">
+								<gml:description xlink:type="simple">SAS</gml:description>
+								<connects>
+									<Transition xlink:href="#T016" gml:id="T016_10"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T017" gml:id="T017_11"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P10">
+										<gml:pos>46.071558567026 23.556222343874 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S509">
+								<gml:description xlink:type="simple">SASDiningRoomDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T017" gml:id="T017_12"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T018" gml:id="T018_13"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P509">
+										<gml:pos>46.071566613653 23.55623575492 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S9">
+								<gml:description xlink:type="simple">Dining Room</gml:description>
+								<connects>
+									<Transition xlink:href="#T018" gml:id="T018_14"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P9">
+										<gml:pos>46.071558902303 23.556254530383 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S7">
+								<gml:description xlink:type="simple">Hallway</gml:description>
+								<connects>
+									<Transition xlink:href="#T013" gml:id="T013_15"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T014" gml:id="T014_16"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T015" gml:id="T015_17"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T057" gml:id="T057_18"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P7">
+										<gml:pos>46.071570972243 23.556193510128 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S5">
+								<gml:description xlink:type="simple">SAS</gml:description>
+								<connects>
+									<Transition xlink:href="#T075" gml:id="T075_19"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T035" gml:id="T035_20"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T045" gml:id="T045_21"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T065" gml:id="T065_22"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P5">
+										<gml:pos>46.0716058242 23.5562299912 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S575">
+								<gml:description xlink:type="simple">HallwaySASDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T075" gml:id="T075_23"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T057" gml:id="T057_24"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P575">
+										<gml:pos>46.0715943479 23.5562170335 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S535">
+								<gml:description xlink:type="simple">SASCleaningDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T035" gml:id="T035_25"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T053" gml:id="T053_26"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P535">
+										<gml:pos>46.0716119262 23.5562290224 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S3">
+								<gml:description xlink:type="simple">Cleaning</gml:description>
+								<connects>
+									<Transition xlink:href="#T053" gml:id="T053_27"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P3">
+										<gml:pos>46.0716178174 23.5562314854 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S554">
+								<gml:description xlink:type="simple">SASWasteDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T045" gml:id="T045_28"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T054" gml:id="T054_29"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P554">
+										<gml:pos>46.0716030093 23.5562520828 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S4">
+								<gml:description xlink:type="simple">Waste</gml:description>
+								<connects>
+									<Transition xlink:href="#T054" gml:id="T054_30"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P4">
+										<gml:pos>46.0716047232 23.556269807 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S556">
+								<gml:description xlink:type="simple">SASMedicalWasteDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T065" gml:id="T065_31"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T056" gml:id="T056_32"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P556">
+										<gml:pos>46.0715959627 23.55624911 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S6">
+								<gml:description xlink:type="simple">MedicalWaste</gml:description>
+								<connects>
+									<Transition xlink:href="#T056" gml:id="T056_33"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P6">
+										<gml:pos>46.0715907879 23.5562679375 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S578">
+								<gml:description xlink:type="simple">HallwayRegistryDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T078" gml:id="T078_34"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T058" gml:id="T058_35"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P578">
+										<gml:pos>46.0715783463 23.5562189419 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S8">
+								<gml:description xlink:type="simple">Registry</gml:description>
+								<connects>
+									<Transition xlink:href="#T058" gml:id="T058_36"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P8">
+										<gml:pos>46.0715779683 23.5562319868 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S1000">
+								<gml:description xlink:type="simple">AnchorNode</gml:description>
+								<connects>
+									<Transition xlink:href="#T050" gml:id="T050_37"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P1000">
+										<gml:pos>46.0715554691 23.5561959707 0.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S11">
+								<gml:description xlink:type="simple">Stairwell</gml:description>
+								<connects>
+									<Transition xlink:href="#T110" gml:id="T110_38"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T001" gml:id="T001_39"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P11">
+										<gml:pos>46.071584048012 23.556150930059 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S601">
+								<gml:description xlink:type="simple">DoorStairwell</gml:description>
+								<connects>
+									<Transition xlink:href="#T110" gml:id="T110_40"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T114" gml:id="T114_41"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P601">
+										<gml:pos>46.071571978071 23.556169705523 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S602">
+								<gml:description xlink:type="simple">DoorElevator</gml:description>
+								<connects>
+									<Transition xlink:href="#T112" gml:id="T112_42"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T113" gml:id="T113_43"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P602">
+										<gml:pos>46.071601482371 23.556196192337 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S12">
+								<gml:description xlink:type="simple">Elevator</gml:description>
+								<connects>
+									<Transition xlink:href="#T112" gml:id="T112_44"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T002" gml:id="T002_45"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P12">
+										<gml:pos>46.071611540654 23.556200886202 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S610">
+								<gml:description xlink:type="simple">HallwaySASDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T115" gml:id="T115_46"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T116" gml:id="T116_47"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P610">
+										<gml:pos>46.071569966415 23.556215638352 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S20">
+								<gml:description xlink:type="simple">SAS</gml:description>
+								<connects>
+									<Transition xlink:href="#T116" gml:id="T116_48"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T117" gml:id="T117_49"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P20">
+										<gml:pos>46.071558567026 23.556222343874 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S609">
+								<gml:description xlink:type="simple">SASDiningRoomDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T117" gml:id="T117_50"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T118" gml:id="T118_51"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P609">
+										<gml:pos>46.071566613653 23.55623575492 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S19">
+								<gml:description xlink:type="simple">Dining Room</gml:description>
+								<connects>
+									<Transition xlink:href="#T118" gml:id="T118_52"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P19">
+										<gml:pos>46.071558902303 23.556254530383 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S17">
+								<gml:description xlink:type="simple">Hallway</gml:description>
+								<connects>
+									<Transition xlink:href="#T113" gml:id="T113_53"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T114" gml:id="T114_54"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T115" gml:id="T115_55"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T157" gml:id="T157_56"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T178" gml:id="T178_57"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P17">
+										<gml:pos>46.071570972243 23.556193510128 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S15">
+								<gml:description xlink:type="simple">SAS</gml:description>
+								<connects>
+									<Transition xlink:href="#T175" gml:id="T175_58"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T135" gml:id="T135_59"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T145" gml:id="T145_60"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T165" gml:id="T165_61"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P15">
+										<gml:pos>46.0716058242 23.5562299912 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S675">
+								<gml:description xlink:type="simple">HallwaySASDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T175" gml:id="T175_62"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T157" gml:id="T157_63"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P675">
+										<gml:pos>46.0715943479 23.5562170335 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S635">
+								<gml:description xlink:type="simple">SASCleaningDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T135" gml:id="T135_64"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T153" gml:id="T153_65"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P635">
+										<gml:pos>46.0716119262 23.5562290224 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S13">
+								<gml:description xlink:type="simple">Cleaning</gml:description>
+								<connects>
+									<Transition xlink:href="#T153" gml:id="T153_66"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P13">
+										<gml:pos>46.0716178174 23.5562314854 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S654">
+								<gml:description xlink:type="simple">SASWasteDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T145" gml:id="T145_67"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T154" gml:id="T154_68"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P654">
+										<gml:pos>46.0716030093 23.5562520828 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S14">
+								<gml:description xlink:type="simple">Waste</gml:description>
+								<connects>
+									<Transition xlink:href="#T154" gml:id="T154_69"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P14">
+										<gml:pos>46.0716047232 23.556269807 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S656">
+								<gml:description xlink:type="simple">SASMedicalWasteDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T165" gml:id="T165_70"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T156" gml:id="T156_71"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P656">
+										<gml:pos>46.0715959627 23.55624911 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S16">
+								<gml:description xlink:type="simple">MedicalWaste</gml:description>
+								<connects>
+									<Transition xlink:href="#T156" gml:id="T156_72"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P16">
+										<gml:pos>46.0715907879 23.5562679375 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S678">
+								<gml:description xlink:type="simple">HallwayRegistryDoor</gml:description>
+								<connects>
+									<Transition xlink:href="#T178" gml:id="T178_73"/>
+								</connects>
+								<connects>
+									<Transition xlink:href="#T158" gml:id="T158_74"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P678">
+										<gml:pos>46.0715783463 23.5562189419 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+						<stateMember>
+							<State gml:id="S18">
+								<gml:description xlink:type="simple">Registry</gml:description>
+								<connects>
+									<Transition xlink:href="#T158" gml:id="T158_75"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:Point srsName="EPSG:4326" gml:id="P18">
+										<gml:pos>46.0715779683 23.5562319868 1.0</gml:pos>
+									</gml:Point>
+								</geometry>
+							</State>
+						</stateMember>
+					</nodes>
+					<edges gml:id="Edges">
+						<transitionMember>
+							<Transition gml:id="T010">
+								<gml:description xlink:type="simple">T010</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S1" gml:id="S1_0"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S501" gml:id="S501_1"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS010">
+										<gml:pos>46.071584048012 23.556150930059 0.0</gml:pos>
+										<gml:pos>46.071571978071 23.556169705523 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T012">
+								<gml:description xlink:type="simple">T012</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S2" gml:id="S2_2"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S502" gml:id="S502_3"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS012">
+										<gml:pos>46.071611540654 23.556200886202 0.0</gml:pos>
+										<gml:pos>46.071601482371 23.556196192337 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T013">
+								<gml:description xlink:type="simple">T013</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S7" gml:id="S7_4"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S502" gml:id="S502_5"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS013">
+										<gml:pos>46.071570972243 23.556193510128 0.0</gml:pos>
+										<gml:pos>46.071601482371 23.556196192337 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T014">
+								<gml:description xlink:type="simple">T014</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S501" gml:id="S501_6"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S7" gml:id="S7_7"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS014">
+										<gml:pos>46.071571978071 23.556169705523 0.0</gml:pos>
+										<gml:pos>46.071570972243 23.556193510128 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T015">
+								<gml:description xlink:type="simple">T015</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S510" gml:id="S510_8"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S7" gml:id="S7_9"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS015">
+										<gml:pos>46.071569966415 23.556215638352 0.0</gml:pos>
+										<gml:pos>46.071570972243 23.556193510128 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T016">
+								<gml:description xlink:type="simple">T016</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S10" gml:id="S10_10"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S510" gml:id="S510_11"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS016">
+										<gml:pos>46.071558567026 23.556222343874 0.0</gml:pos>
+										<gml:pos>46.071569966415 23.556215638352 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T017">
+								<gml:description xlink:type="simple">T017</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S509" gml:id="S509_12"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S10" gml:id="S10_13"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS017">
+										<gml:pos>46.071566613653 23.55623575492 0.0</gml:pos>
+										<gml:pos>46.071558567026 23.556222343874 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T018">
+								<gml:description xlink:type="simple">T018</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S9" gml:id="S9_14"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S509" gml:id="S509_15"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS018">
+										<gml:pos>46.071558902303 23.556254530383 0.0</gml:pos>
+										<gml:pos>46.071566613653 23.55623575492 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T075">
+								<gml:description xlink:type="simple">T075</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S5" gml:id="S5_16"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S575" gml:id="S575_17"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS075">
+										<gml:pos>46.0716058242 23.5562299912 0.0</gml:pos>
+										<gml:pos>46.0715943479 23.5562170335 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T035">
+								<gml:description xlink:type="simple">T035</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S5" gml:id="S5_18"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S535" gml:id="S535_19"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS035">
+										<gml:pos>46.0716058242 23.5562299912 0.0</gml:pos>
+										<gml:pos>46.0716119262 23.5562290224 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T053">
+								<gml:description xlink:type="simple">T053</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S3" gml:id="S3_20"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S535" gml:id="S535_21"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS053">
+										<gml:pos>46.0716178174 23.5562314854 0.0</gml:pos>
+										<gml:pos>46.0716119262 23.5562290224 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T045">
+								<gml:description xlink:type="simple">T045</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S5" gml:id="S5_22"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S554" gml:id="S554_23"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS045">
+										<gml:pos>46.0716058242 23.5562299912 0.0</gml:pos>
+										<gml:pos>46.0716030093 23.5562520828 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T054">
+								<gml:description xlink:type="simple">T054</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S554" gml:id="S554_24"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S4" gml:id="S4_25"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS054">
+										<gml:pos>46.0716030093 23.5562520828 0.0</gml:pos>
+										<gml:pos>46.0716047232 23.556269807 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T065">
+								<gml:description xlink:type="simple">T065</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S5" gml:id="S5_26"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S556" gml:id="S556_27"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS065">
+										<gml:pos>46.0716058242 23.5562299912 0.0</gml:pos>
+										<gml:pos>46.0715959627 23.55624911 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T056">
+								<gml:description xlink:type="simple">T056</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S556" gml:id="S556_28"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S6" gml:id="S6_29"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS056">
+										<gml:pos>46.0715959627 23.55624911 0.0</gml:pos>
+										<gml:pos>46.0715907879 23.5562679375 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T058">
+								<gml:description xlink:type="simple">T058</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S578" gml:id="S578_30"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S8" gml:id="S8_31"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS058">
+										<gml:pos>46.0715783463 23.5562189419 0.0</gml:pos>
+										<gml:pos>46.0715779683 23.5562319868 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T057">
+								<gml:description xlink:type="simple">T057</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S575" gml:id="S575_32"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S7" gml:id="S7_33"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS057">
+										<gml:pos>46.0715943479 23.5562170335 0.0</gml:pos>
+										<gml:pos>46.071570972243 23.556193510128 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T078">
+								<gml:description xlink:type="simple">T078</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S7" gml:id="S7_34"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S578" gml:id="S578_35"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS078">
+										<gml:pos>46.071570972243 23.556193510128 0.0</gml:pos>
+										<gml:pos>46.0715783463 23.5562189419 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T050">
+								<gml:description xlink:type="simple">T050</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S7" gml:id="S7_36"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S1000" gml:id="S1000_37"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS050">
+										<gml:pos>46.071570972243 23.556193510128 0.0</gml:pos>
+										<gml:pos>46.0715554691 23.5561959707 0.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T110">
+								<gml:description xlink:type="simple">T110</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S11" gml:id="S11_38"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S601" gml:id="S601_39"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS110">
+										<gml:pos>46.071584048012 23.556150930059 1.0</gml:pos>
+										<gml:pos>46.071571978071 23.556169705523 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T112">
+								<gml:description xlink:type="simple">T112</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S12" gml:id="S12_40"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S602" gml:id="S602_41"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS112">
+										<gml:pos>46.071611540654 23.556200886202 1.0</gml:pos>
+										<gml:pos>46.071601482371 23.556196192337 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T113">
+								<gml:description xlink:type="simple">T113</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S17" gml:id="S17_42"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S602" gml:id="S602_43"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS113">
+										<gml:pos>46.071570972243 23.556193510128 1.0</gml:pos>
+										<gml:pos>46.071601482371 23.556196192337 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T114">
+								<gml:description xlink:type="simple">T114</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S601" gml:id="S601_44"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S17" gml:id="S17_45"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS114">
+										<gml:pos>46.071571978071 23.556169705523 1.0</gml:pos>
+										<gml:pos>46.071570972243 23.556193510128 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T115">
+								<gml:description xlink:type="simple">T115</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S610" gml:id="S610_46"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S17" gml:id="S17_47"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS115">
+										<gml:pos>46.071569966415 23.556215638352 1.0</gml:pos>
+										<gml:pos>46.071570972243 23.556193510128 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T116">
+								<gml:description xlink:type="simple">T116</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S20" gml:id="S20_48"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S610" gml:id="S610_49"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS116">
+										<gml:pos>46.071558567026 23.556222343874 1.0</gml:pos>
+										<gml:pos>46.071569966415 23.556215638352 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T117">
+								<gml:description xlink:type="simple">T117</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S609" gml:id="S609_50"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S20" gml:id="S20_51"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS117">
+										<gml:pos>46.071566613653 23.55623575492 1.0</gml:pos>
+										<gml:pos>46.071558567026 23.556222343874 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T118">
+								<gml:description xlink:type="simple">T118</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S19" gml:id="S19_52"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S609" gml:id="S609_53"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS118">
+										<gml:pos>46.071558902303 23.556254530383 1.0</gml:pos>
+										<gml:pos>46.071566613653 23.55623575492 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T175">
+								<gml:description xlink:type="simple">T175</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S15" gml:id="S15_54"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S675" gml:id="S675_55"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS175">
+										<gml:pos>46.0716058242 23.5562299912 1.0</gml:pos>
+										<gml:pos>46.0715943479 23.5562170335 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T135">
+								<gml:description xlink:type="simple">T135</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S15" gml:id="S15_56"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S635" gml:id="S635_57"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS135">
+										<gml:pos>46.0716058242 23.5562299912 1.0</gml:pos>
+										<gml:pos>46.0716119262 23.5562290224 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T153">
+								<gml:description xlink:type="simple">T153</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S13" gml:id="S13_58"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S635" gml:id="S635_59"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS153">
+										<gml:pos>46.0716178174 23.5562314854 1.0</gml:pos>
+										<gml:pos>46.0716119262 23.5562290224 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T145">
+								<gml:description xlink:type="simple">T145</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S15" gml:id="S15_60"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S654" gml:id="S654_61"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS145">
+										<gml:pos>46.0716058242 23.5562299912 1.0</gml:pos>
+										<gml:pos>46.0716030093 23.5562520828 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T154">
+								<gml:description xlink:type="simple">T154</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S654" gml:id="S654_62"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S14" gml:id="S14_63"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS154">
+										<gml:pos>46.0716030093 23.5562520828 1.0</gml:pos>
+										<gml:pos>46.0716047232 23.556269807 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T165">
+								<gml:description xlink:type="simple">T165</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S15" gml:id="S15_64"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S656" gml:id="S656_65"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS165">
+										<gml:pos>46.0716058242 23.5562299912 1.0</gml:pos>
+										<gml:pos>46.0715959627 23.55624911 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T156">
+								<gml:description xlink:type="simple">T156</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S656" gml:id="S656_66"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S16" gml:id="S16_67"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS156">
+										<gml:pos>46.0715959627 23.55624911 1.0</gml:pos>
+										<gml:pos>46.0715907879 23.5562679375 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T158">
+								<gml:description xlink:type="simple">T158</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S678" gml:id="S678_68"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S18" gml:id="S18_69"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS158">
+										<gml:pos>46.0715783463 23.5562189419 1.0</gml:pos>
+										<gml:pos>46.0715779683 23.5562319868 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T157">
+								<gml:description xlink:type="simple">T157</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S675" gml:id="S675_70"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S17" gml:id="S17_71"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS157">
+										<gml:pos>46.0715943479 23.5562170335 1.0</gml:pos>
+										<gml:pos>46.071570972243 23.556193510128 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T178">
+								<gml:description xlink:type="simple">T178</gml:description>
+								<weight>1.0</weight>
+								<connects>
+									<State xlink:href="#S17" gml:id="S17_72"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S678" gml:id="S678_73"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS178">
+										<gml:pos>46.071570972243 23.556193510128 1.0</gml:pos>
+										<gml:pos>46.0715783463 23.5562189419 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T001">
+								<gml:description xlink:type="simple">T001</gml:description>
+								<weight>2.0</weight>
+								<connects>
+									<State xlink:href="#S1" gml:id="S1_74"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S11" gml:id="S11_75"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS001">
+										<gml:pos>46.071584048012 23.556150930059 0.0</gml:pos>
+										<gml:pos>46.071584048012 23.556150930059 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+						<transitionMember>
+							<Transition gml:id="T002">
+								<gml:description xlink:type="simple">T002</gml:description>
+								<weight>2.0</weight>
+								<connects>
+									<State xlink:href="#S2" gml:id="S2_76"/>
+								</connects>
+								<connects>
+									<State xlink:href="#S12" gml:id="S12_77"/>
+								</connects>
+								<geometry xlink:type="simple">
+									<gml:LineString srsName="EPSG:4326" gml:id="LS002">
+										<gml:pos>46.071611540654 23.556200886202 0.0</gml:pos>
+										<gml:pos>46.071611540654 23.556200886202 1.0</gml:pos>
+									</gml:LineString>
+								</geometry>
+							</Transition>
+						</transitionMember>
+					</edges>
+				</SpaceLayer>
+			</spaceLayerMember>
+		</spaceLayers>
+	</MultiLayeredGraph>
+</IndoorFeatures>
