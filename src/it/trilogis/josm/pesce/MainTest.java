@@ -33,7 +33,7 @@ public class MainTest {
             IndoorFeaturesType root = (IndoorFeaturesType) jaxb.getValue(); 
             System.out.println("!");
             
-            DataSet result = IGMLConverter.convert(root);
+            DataSet result = IGMLConverter.convertDebug(root);
             
         } catch (JAXBException e) {
             e.printStackTrace();
