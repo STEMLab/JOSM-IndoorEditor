@@ -26,6 +26,7 @@ public class PescePlugin extends Plugin {
         
         ExtensionFileFilter.importers.add(importer);
         ExtensionFileFilter.exporters.add(exporter);
+        //
     }
     
     @Override

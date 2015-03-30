@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/JOSM"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PortalRequestSample"/>
+	<classpathentry kind="lib" path="lib/josm-custom.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
