@@ -119,7 +119,8 @@ public class IGMLConverter {
         
     }
     
-    private void printPaths(List<List<String>> paths) {
+    private void printPaths(List<List<String>> paths, String msg) {
+        System.out.println(msg);
         int i = 0;
         for(List<String> path : paths) {
             printPath(path, ""+i++);
@@ -147,11 +148,11 @@ public class IGMLConverter {
                 short pathI = 0;
                 for(List<String> path : paths) {
                     
-                    printPath(path,pathI+"old:");
                     if(path.get(0).equals(tx[0])) {
+                        printPath(path,pathI+"old:");
                         path.add(0, tx[1]);
                     } else if(path.get(path.size()-1).equals(tx[0])) {
-                        
+                        printPath(path,pathI+"old:");
                         path.add(tx[1]); // add the transition to the path
                     } else {
                         pathI++;
@@ -176,14 +177,71 @@ public class IGMLConverter {
             }
         }
         
-        printPaths(paths);
+        printPaths(paths,"Not joined paths");
         joinPaths(paths, true);
-        printPaths(paths);
+        printPaths(paths,"Joined paths");
         
         return paths;
     }
     
+
     private void joinPaths(List<List<String>> paths, boolean reverseAllowed) {
+      
+        // test every couple of paths
+        rewind: while(true) {
+            System.out.println("Rewind");
+            for(List<String> i : paths) {
+                printPath(i,"i");
+                for(List<String> j : paths) {
+                    if(i==j) {
+                        continue; // Force: i != j
+                    }
+                    printPath(j,"j");
+                    String
+                        h1 = i.get(0),
+                        t1 = i.get(i.size()-1),
+                        h2 = j.get(0),
+                        t2 = j.get(j.size()-1);
+                    
+                    int match = h1.equals(h2) ? 0 : h1.equals(t2) ? 1 : t1.equals(h2) ? 2 : t1.equals(t2) ? 3 : 4;
+
+                    System.out.println("Match: "+match);
+                    if(!reverseAllowed && (match == 0 || match == 3) || match == 4) {
+                        continue;
+                    }
+                    
+                    switch(match) {
+                    case 0: //hh                     x-----> x----->
+                        i.remove(0);
+                        Collections.reverse(i);
+                        i.addAll(j);
+                        paths.remove(j);
+                        break;
+                    case 1: //ht                     x-----> ----->x
+                        i.remove(0);
+                        j.addAll(i);
+                        paths.remove(i);
+                        break;
+                    case 2: //th                     ----->x x----->
+                        j.remove(0);
+                        i.addAll(j);
+                        paths.remove(j);
+                        break;
+                    case 3: //tt                     ----->x ----->x
+                        Collections.reverse(j);
+                        j.remove(0);
+                        i.addAll(j);
+                        paths.remove(j);
+                    }
+                    continue rewind; // because paths changes
+                }
+            }
+            break; // If we are here all the paths were join
+        }
+        
+    }
+    
+    private void joinPathsQuickButBroken(List<List<String>> paths, boolean reverseAllowed) {
         
         Map<String,List<List<String>>> tips = new HashMap<>();
       
@@ -236,23 +294,26 @@ public class IGMLConverter {
                     continue;
                 }
                 
-                System.out.println(">>>> "+match);
-                
                 switch(match) {
-                case 0: //hh
+                case 0: //hh                     x-----> x----->
+                    path1.remove(0);
                     Collections.reverse(path1);
                     path1.addAll(path2);
                     paths.remove(path2);
                     break;
-                case 1: //ht
+                case 1: //ht                     x-----> ----->x
+                    path1.remove(0);
                     path2.addAll(path1);
                     paths.remove(path1);
                     break;
-                case 2: //th
+                case 2: //th                     ----->x x----->
+                    path2.remove(0);
                     path1.addAll(path2);
                     paths.remove(path2);
-                case 3: //tt
+                    break;
+                case 3: //tt                     ----->x ----->x
                     Collections.reverse(path2);
+                    path2.remove(0);
                     path1.addAll(path2);
                     paths.remove(path2);
                 }
@@ -278,9 +339,7 @@ public class IGMLConverter {
             System.out.println("EdgesType id: "+type.getId());
             for(TransitionMemberType transitionMember : type.getTransitionMember()) {
                 TransitionType transition = transitionMember.getTransition();
-                System.out.println("Transition id: "+transition.getId()); // used into Edges to identify states
                 String stateName = transition.getDescription().getTitle();
-                System.out.println(stateName);
                 // I'm assuming a lot of wrong things
                 String txId = transition.getId();
                 JAXBElement<? extends AbstractCurveType> curve = transition.getGeometry().getAbstractCurve();
@@ -291,6 +350,7 @@ public class IGMLConverter {
                 
                 txs.add(new String[] {nodeId1, nodeId2});
                 
+                System.out.println(String.format("Transition %s: %s -> %s", transition.getId(), nodeId1, nodeId2));
                 /*
                 Node node1 = nodes.get(nodeId1);
                 Node node2 = nodes.get(nodeId2);
