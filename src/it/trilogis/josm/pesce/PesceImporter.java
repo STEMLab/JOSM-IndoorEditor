@@ -5,8 +5,10 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,11 +38,14 @@ import org.openstreetmap.josm.io.OsmImporter;
 public class PesceImporter extends OsmImporter {
 
 
-    private static String EXT = "igml", EXT2 = "pesce";
+    public static String EXT = "igml";
+    private static String EXT2 = "pesce";
     public final static ExtensionFileFilter INDOOR_FILE_FILTER = new ExtensionFileFilter(
             String.format("%s,%s.gz,%s.bz2,%s", EXT, EXT, EXT, EXT2),
             EXT, tr("IndoorGML files") + " (*."+EXT+"[.gz|.bz2])");
     private boolean isFirstType = true;
+    
+    static IndoorFeaturesType tempRoot; 
     
     public PesceImporter() {
         super(INDOOR_FILE_FILTER);
@@ -51,56 +56,29 @@ public class PesceImporter extends OsmImporter {
         isFirstType = pathname.getName().endsWith(EXT);
         return super.acceptFile(pathname); // TODO: check!
     }
-    
-    /**
-     * Imports Pesce data from file
-     * @param file file to read data from
-     * @param progressMonitor handler for progress monitoring and canceling
-     * /
-    @Override
-    public void importData(File file, ProgressMonitor progressMonitor) throws IOException, IllegalDataException {
-        try (InputStream in = Compression.getUncompressedFileInputStream(file)) {
-            importData(in, file, progressMonitor);
-        } catch (FileNotFoundException e) {
-            Main.error(e);
-            throw new IOException(tr("File ''{0}'' does not exist.", file.getName()), e);
-        }
-    }*/
-    
-    /*
-    public void importData(InputStream in, File file, ProgressMonitor progressMonitor) throws IllegalDataException {
-
-        final DataSet dataSet;
-        if(file.getName().endsWith(EXT2)) {
-            dataSet = parsePesce(in, progressMonitor);
-        } else {
-            dataSet = parseDataSet(in, progressMonitor);
-        }
-        if (dataSet == null) {
-            throw new IllegalDataException(tr("Invalid dataset"));
-        }
-        OsmDataLayer layer = createLayer(dataSet, file, file.getName());
-        
-        BoundingXYVisitor v = new BoundingXYVisitor();
-        v.visit(layer.data.getDataSourceBoundingBox());
-        if (!v.hasExtend()) {
-            v.computeBoundingBox(layer.data.getNodes());
-        }
-        Main.main.addLayer(layer, v.getBounds());
-        layer.onPostLoadFromFile();
-    }*/
-    
 
     @Override
     protected DataSet parseDataSet(InputStream in, ProgressMonitor monitor)
             throws IllegalDataException {
 
+        IndoorFeaturesType root;
         if(isFirstType) {
-            IndoorFeaturesType root = Marshalling.unmarshal(in);
+            root = Marshalling.unmarshal(in);
+            tempRoot = root;
+
+            // TEST
+            /*try {
+                Marshalling.marshal(root, new FileOutputStream(new File("outputdiprova.igml")));
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }*/
             return IGMLConverter.convert(root);
         } else {
             return parsePesce(in, monitor);
         }
+        
+        
     }
     
     

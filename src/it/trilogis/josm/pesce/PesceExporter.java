@@ -2,6 +2,7 @@
 package it.trilogis.josm.pesce;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
+import it.trilogis.josm.pesce.OSMConverter.ConversionException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,16 +13,30 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.Collection;
 
 import javax.swing.JOptionPane;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
+import net.opengis.gml.v_3_2_1.FeatureCollectionType;
+import net.opengis.indoorgml.v_1_0.core.IndoorFeaturesType;
 
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.actions.ExtensionFileFilter;
+import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.io.FileExporter;
 import org.openstreetmap.josm.tools.Utils;
 import org.openstreetmap.josm.io.Compression;
+
+import trilogis.net.opengis.gml.v_3_2_1.CustomLineFeatureMember;
+import trilogis.net.opengis.gml.v_3_2_1.CustomPointFeatureMember;
 
 /**
  * Exports data to an .osm file.
@@ -29,10 +44,9 @@ import org.openstreetmap.josm.io.Compression;
  */
 public class PesceExporter extends FileExporter {
     
-    private static String EXT = "xml";
     public final static ExtensionFileFilter INDOOR_FILE_FILTER = new ExtensionFileFilter(
-            String.format("%s,%s.gz,%s.bz2", EXT, EXT, EXT),
-            EXT, tr("IndoorGML files") + " (*."+EXT+"[.gz|.bz2])");
+            String.format("%s,%s.gz,%s.bz2", PesceImporter.EXT, PesceImporter.EXT, PesceImporter.EXT),
+            PesceImporter.EXT, tr("IndoorGML files") + " (*."+PesceImporter.EXT+"[.gz|.bz2])");
     /**
      * Constructs a new {@code OsmExporter}.
      */
@@ -130,9 +144,15 @@ public class PesceExporter extends FileExporter {
     }
 
     protected void doSave(File file, OsmDataLayer layer) throws IOException, FileNotFoundException {
-        try (OutputStream out = getOutputStream(file)) {
-            out.write("file salvato".getBytes());
-            out.close();
+        
+        
+        IndoorFeaturesType document;
+        try {
+            document = OSMConverter.convert(layer.data);
+            Marshalling.marshal(document, getOutputStream(file));
+        } catch (ConversionException e) {
+            e.printStackTrace();
         }
+        
     }
 }
