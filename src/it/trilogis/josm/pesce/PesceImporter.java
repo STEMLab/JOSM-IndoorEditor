@@ -87,6 +87,8 @@ public class PesceImporter extends OsmImporter {
             throws IllegalDataException {
         DataSet data = new DataSet();
         
+        data.setUploadDiscouraged(true);
+        
         data.beginUpdate();
         for(String line : convertStreamToString(in).split("\n")) {
             String[] s = line.split(",");
@@ -105,16 +107,16 @@ public class PesceImporter extends OsmImporter {
             for(int j=0 ; j<2; j++){
                 Node first = null;
                 Way fishWay = new Way();
-                for(int i=0 ; i<Constants.delta[j].length ; i++) {
-                    Node n = new Node(new LatLon(lat + scale * Constants.delta[j][i][0],lon + scale * Constants.delta[j][i][1]));
+                for(int i=0 ; i<Constants.DELTA[j].length ; i++) {
+                    Node n = new Node(new LatLon(lat + scale * Constants.DELTA[j][i][0],lon + scale * Constants.DELTA[j][i][1]));
                     keys = n.getKeys();
                     if(null==keys){
                         keys = new HashMap<>();
                     }
-                    if(Constants.delta[j][i].length > 2) {
-                        if(Constants.delta[j][i][2] == 1.) {
+                    if(Constants.DELTA[j][i].length > 2) {
+                        if(Constants.DELTA[j][i][2] == 1.) {
                             keys.put("name", "testa");
-                        } else if(Constants.delta[j][i][2] == 2.) {
+                        } else if(Constants.DELTA[j][i][2] == 2.) {
                             keys.put("name", "coda");
                         }
                     }

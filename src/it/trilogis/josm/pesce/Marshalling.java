@@ -1,9 +1,8 @@
 package it.trilogis.josm.pesce;
 
-import it.trilogis.ingoorgml.utils.GMLNamespaceMapper;
-
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -11,9 +10,10 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 
+import net.opengis.indoorgml.v_1_0.core.*;
+
 import org.openstreetmap.josm.Main;
 
-import net.opengis.indoorgml.v_1_0.core.IndoorFeaturesType;
 
 public class Marshalling {
     
@@ -40,15 +40,54 @@ public class Marshalling {
             debug(">>> 2");
             return u.unmarshal(src,IndoorFeaturesType.class).getValue();
             
-        } catch (JAXBException e) {
+        } catch (JAXBException | IllegalArgumentException e) {
             error("Not valid dataset!");
             e.printStackTrace();
             return null;
         }
     }
     
+    //temp
+    private static boolean ipn(Object par, String name) {
+        if(null==par) {
+            System.err.println(name+"==NULL");
+            return true;
+        }
+        return false;
+    }
+    private static boolean checkIntegrity(IndoorFeaturesType document) {
+        // Check null fields
+        MultiLayeredGraphType mgt = document.getMultiLayeredGraph();
+        if(ipn(mgt,"mgt")) return false;
+        for(SpaceLayersType slst : mgt.getSpaceLayers()) {
+            if(ipn(slst,"slst")) return false;
+            
+            for(SpaceLayerMemberType slmt : slst.getSpaceLayerMember()) {
+                if(ipn(slmt,"slmt")) return false;
+                SpaceLayerType slt = slmt.getSpaceLayer();
+                if(ipn(slt,"slt")) return false;
+                
+                for(NodesType nt : slt.getNodes()){
+                    if(ipn(nt,"nt")) return false;
+                    nt.getStateMember();
+                    for(StateMemberType smt : nt.getStateMember()){
+                        if(ipn(smt,"smt")) return false;
+                        smt.getState(); // This could be null
+                        //System.out.println("Nothing to see here");
+                    }
+                }
+            }
+            
+        }
+        return true;
+    }
+    
     public static void marshal(IndoorFeaturesType document, OutputStream output) {
         
+        if(!checkIntegrity(document)) {
+            System.err.println("Problems with the document");
+            return;
+        }
         JAXBContext jaxbContext;
         try {
             jaxbContext = JAXBContext.newInstance(IndoorFeaturesType.class);

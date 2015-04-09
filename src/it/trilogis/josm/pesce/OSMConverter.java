@@ -1,13 +1,12 @@
 package it.trilogis.josm.pesce;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 
@@ -18,6 +17,7 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 
 public class OSMConverter {
@@ -26,7 +26,7 @@ public class OSMConverter {
     private Collection<Node> nodes;
     private Collection<Way> ways;
     private Collection<Relation> relations;
-    private IndoorFeaturesType root;
+   //private TransactionIds txIds;
     
     private IdsFactory idsFactory;
     final net.opengis.gml.v_3_2_1.ObjectFactory _gmlObjectFactory = new net.opengis.gml.v_3_2_1.ObjectFactory();
@@ -36,6 +36,8 @@ public class OSMConverter {
         ways = data.getWays();
         relations = data.getRelations();
         idsFactory = new IdsFactory();
+        
+        //txIds = TransactionIds.getInstance(data);
     }
 
     
@@ -55,7 +57,7 @@ public class OSMConverter {
         
         root.setMultiLayeredGraph(converter.graph());
         
-        return converter.root;
+        return root;
     }
     
     private MultiLayeredGraphType graph() throws ConversionException {
@@ -69,47 +71,50 @@ public class OSMConverter {
         SpaceLayerMemberType member = new SpaceLayerMemberType();
         layer.getSpaceLayerMember().add(member);
         
-        member.setSpaceLayer(spaceLayerTypeBuilder("walking", nodes(), edges()));
-               
+        for(Relation relation : relations) {
+            if(relation.hasKey("type") && relation.hasKey("name") && relation.get("type").equals(Constants.OSM_RELATION_TYPE_SPACELAYER)) {
+                // This id has to come from the relation: should I put both nodes and edges into the relationship? Yes
+                member.setSpaceLayer(spaceLayerTypeBuilder(relation.get("name"), nodes(relation), edges(relation)));        
+            }
+        }
+        
+        
         return graph;
     }
     
-    private StateMemberType uno=null,due=null,tre=null;
-    private NodesType nodes() throws ConversionException {
+    private Map<String,List<TransitionType>> transitionReferences; // state id -> transactions
+    
+    private NodesType nodes(Relation relation) throws ConversionException {
         NodesType nodesType = new NodesType();
+        transitionReferences = new HashMap<>();
+        
+        nodesType.setId(idsFactory.newId("Nodes"));
+        
+        for(RelationMember member : relation.getMembers()) {
+            if(member.getRole().equals(Constants.OSM_RELATION_ROLE_STATE)) {
+                Node n = member.getNode();
+                
+                StateMemberType stateMemberType;    
+                String stateId;
+                if(n.getKeys().containsKey("name")) {
+                    stateId = n.get("name");
+                } else {
+                   throw new ConversionException("State name not defined");
+                }
 
-        nodesType.setId("Nodes");
-        
-        
-        for(Node n : nodes) {
-            StateMemberType stateMemberType;    
-            String stateId;
-            if(n.getKeys().containsKey("name")) {
-                stateId = n.get("name");
-            } else {
-               throw new ConversionException("State name not defined");
+                LatLon coor = n.getCoor();
+                
+                PointPropertyType statePosition;
+                List<TransitionType> transitions = new ArrayList<>();
+                transitionReferences.put(stateId, transitions);
+                statePosition = newPointProperty(idsFactory.newId("P"), Constants.SRID4326, coor.getX(), coor.getY(), Double.parseDouble(n.get(Constants.OSM_KEY_LEVEL)));
+                stateMemberType = newStateMember(stateId, stateId+" description", statePosition, transitions);
+                nodesType.getStateMember().add(stateMemberType);
+                // TODO: get real description
+                
+                //state.setGeometry(pointPropertyTypeBuilder(new Double[]{coor.getX(), coor.getY()}));
+                //states.add(stateMemberTypeBuilder(state));
             }
-
-            LatLon coor = n.getCoor();
-            
-            PointPropertyType statePosition;
-            List<TransitionType> transitions = new ArrayList<>();
-            transitions.add(newTransitionTypeReference(idsFactory.newId("T")));
-            statePosition = newPointProperty(idsFactory.newId("P"), "EPSG:4326", coor.getX(), coor.getY(), 0d);
-            stateMemberType = newStateMember(stateId, stateId+" description", statePosition, transitions);
-            nodesType.getStateMember().add(stateMemberType);
-            // TODO: get real description, manage transactions
-            
-            if(null==uno)
-                uno=stateMemberType;
-            else if(null==due)
-                due=stateMemberType;
-            else if(null==tre)
-                tre=stateMemberType;
-            else break;
-            
-            //state.setGeometry(pointPropertyTypeBuilder(new Double[]{coor.getX(), coor.getY()}));
-            //states.add(stateMemberTypeBuilder(state));
         }
         
         return nodesType;
@@ -193,27 +198,47 @@ public class OSMConverter {
     // Builders
     
     //private StateMemberType uno=null,due=null,tre=null;
-    private EdgesType edges()  {
+    private EdgesType edges(Relation relation)  {
         EdgesType edgesType = new EdgesType();
         LineStringType tmpTransitionLine;// PLACEHOLDER
-        edgesType.setId("Edges");
-        
-        List<Node> nodesList = new ArrayList<>(nodes);
-        int i=0;
-        for(Way w : ways) {
-            
-            Node current = nodesList.get(i%3);
-            Node next = nodesList.get((i+1)%3); 
-            
-            List<StateType> t510States = new ArrayList<>();
-            t510States.add(newStateTypeReference(current.get("name")));
-            t510States.add(newStateTypeReference(next.get("name")));
-            tmpTransitionLine = newLineStringProperty(_gmlObjectFactory, idsFactory.getLastId("LS"), "EPSG:4326", new double[] { 23.556150930059, 23.556169705523 }, new double[] { 46.071584048012, 46.071571978071 },
-                new double[] { 0d, 0d });
-            edgesType.getTransitionMember().add(newTransitionMember(_gmlObjectFactory, "T010", 1d, tmpTransitionLine, t510States));
+        edgesType.setId(idsFactory.newId("Edges"));
 
-            
-            i++;
+        
+        for(RelationMember member : relation.getMembers()) {
+            if(member.getRole().equals(Constants.OSM_RELATION_ROLE_TRANSITION)) {
+                Way w = member.getWay();
+                
+                Node start = null;
+                for(Node end : w.getNodes()) {
+                    if(null==start) {
+                        start = end;
+                        continue;
+                    }
+                    
+                    List<StateType> tStates = new ArrayList<>();
+                    tStates.add(newStateTypeReference(start.get("name")));
+                    tStates.add(newStateTypeReference(end.get("name")));
+                    tmpTransitionLine = newLineStringProperty(_gmlObjectFactory, idsFactory.newId("nLS"), Constants.SRID4326, 
+                            new double[] { start.getCoor().getX(), end.getCoor().getX() }, 
+                            new double[] { start.getCoor().getY(), end.getCoor().getY() },
+                            new double[] { 
+                        Double.parseDouble(start.get(Constants.OSM_KEY_LEVEL)),
+                        Double.parseDouble(end.get(Constants.OSM_KEY_LEVEL)) });
+                    String id = w.get("name")!=null ? w.get("name") : idsFactory.newId("nT"); 
+                    edgesType.getTransitionMember().add(newTransitionMember(_gmlObjectFactory, 
+                            id, 
+                            1d, tmpTransitionLine, tStates));
+
+                    // Add references of the transaction to the involved States
+                    for(Node state : new Node[] {start, end}) {
+                        transitionReferences.get(state.get("name")).add(
+                                newTransitionTypeReference(id));
+                    }
+                    
+                    // add reference of the transition to start and end TODO
+                    start = end;
+                }
+            }
         }
         
         return edgesType;

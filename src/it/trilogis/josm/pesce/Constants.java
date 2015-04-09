@@ -1,7 +1,7 @@
 package it.trilogis.josm.pesce;
 
 public class Constants {
-    public static final double[][][] delta = {{
+    public static final double[][][] DELTA = {{
         {1.6502499988746422e-06, -1.789952999864397e-05, 1.},
         {4.921200002172554e-06, -1.321032999967997e-05},
         {8.555550003563894e-06, -9.042129999414783e-06},
@@ -33,4 +33,10 @@ public class Constants {
         {2.740500001152668e-06, -9.685640000256512e-06},
         {3.007700001944613e-06, -1.0143479999058513e-05},
         {3.375620003964741e-06, -1.0423039999096773e-05}}};
+    
+    public static final String OSM_RELATION_TYPE_SPACELAYER = "indoorgml:SpaceLayer";
+    public static final String OSM_RELATION_ROLE_STATE = "state";
+    public static final String OSM_RELATION_ROLE_TRANSITION = "transition";
+    public static final String OSM_KEY_LEVEL = "indoor:level";
+    public static final String SRID4326 = "EPSG:4326";
 }

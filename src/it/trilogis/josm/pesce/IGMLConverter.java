@@ -1,5 +1,7 @@
 package it.trilogis.josm.pesce;
 
+import it.trilogis.josm.pesce.TransactionIds.Tx;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,16 +18,18 @@ import javax.xml.bind.JAXBElement;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 
 import net.opengis.gml.v_3_2_1.AbstractCurveType;
-import net.opengis.gml.v_3_2_1.LineStringType;
 import net.opengis.indoorgml.v_1_0.core.*;
 
 public class IGMLConverter {
     
     public DataSet data;
     public HashMap<String,Node> nodes;
+    //private TransactionIds txIds; //disable, not needed now
     static private boolean test = false;
     
     public static DataSet convertDebug(IndoorFeaturesType root) {
@@ -37,7 +41,7 @@ public class IGMLConverter {
         
         IGMLConverter converter = new IGMLConverter(new DataSet());
         
-        PrimalSpaceFeaturesPropertyType primalSpace = root.getPrimalSpaceFeatures();
+        //PrimalSpaceFeaturesPropertyType primalSpace = root.getPrimalSpaceFeatures();
         
         MultiLayeredGraphType multiLayeredGraph = root.getMultiLayeredGraph();
         
@@ -58,6 +62,9 @@ public class IGMLConverter {
     
     private IGMLConverter(DataSet data) {
         this.data = data;
+        
+        //Store here the transaction ids, JOSM will not see them
+        //txIds = TransactionIds.getInstance(data);
     }
     
     public void graph(MultiLayeredGraphType graph) {
@@ -65,14 +72,28 @@ public class IGMLConverter {
         data.beginUpdate();
         for(SpaceLayersType layer : graph.getSpaceLayers()) {
             System.out.println("Layer id: "+ layer.getId());
+            
 
+            int i=0;
             for(SpaceLayerMemberType member : layer.getSpaceLayerMember()) {
-                System.out.println("Nodes -->");
+                System.out.println("***"+i);
+                i++;
+                
+                SpaceLayerType spaceLayerType = member.getSpaceLayer();
+                
+                // TODO: create a Relation with this name
+                Relation spaceLayerRelation = new Relation();
+                spaceLayerRelation.put("name", spaceLayerType.getId());
+                spaceLayerRelation.put("type", Constants.OSM_RELATION_TYPE_SPACELAYER); // FIXME
+                
+                System.out.println("Nodes of layer " + spaceLayerType.getId() + " -->");
                 //nodes(new SpaceLayerType[]{member.getSpaceLayer().getNodes()[0]});
-                nodes(member.getSpaceLayer().getNodes());
+                nodes(spaceLayerType.getNodes(), spaceLayerRelation);
                 System.out.println("Edges -->");
-                edges(member.getSpaceLayer().getEdges());
+                edges(spaceLayerType.getEdges(), spaceLayerRelation);
                 System.out.println("<--");
+                
+                data.addPrimitive(spaceLayerRelation);
            }
         }
         data.endUpdate();
@@ -89,7 +110,7 @@ public class IGMLConverter {
     }
     
     
-    public void nodes(List<NodesType> nodesType) {
+    public void nodes(List<NodesType> nodesType, Relation spaceLayerRelation) {
         nodes = new HashMap<>();
         
         for(NodesType type : nodesType) {
@@ -99,7 +120,9 @@ public class IGMLConverter {
                 StateType state = node.getState();
                 System.out.println("State id: "+state.getId()); // used into Edges to identify states
                 String stateName = state.getDescription().getTitle();
-                System.out.println(stateName);
+                if(null!=stateName) {
+                    System.out.println("stateName: "+stateName);
+                }
                 // I'm assuming a lot of wrong things
                 List<Double> position = state.getGeometry().getPoint().getPos().getValue();
                 System.out.println(String.format(Locale.US, "%s %f %f", state.getId(), position.get(0), position.get(1)));
@@ -109,9 +132,10 @@ public class IGMLConverter {
                     // Node type can be used only inside JOSM
                     Node josmNode = new Node(new LatLon(position.get(0), position.get(1)));
                     josmNode.put("name", state.getId());
+                    josmNode.put(Constants.OSM_KEY_LEVEL, ""+position.get(2).intValue());
                     nodes.put(state.getId(), josmNode);
                     data.addPrimitive(josmNode);
-                    
+                    spaceLayerRelation.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_STATE, josmNode));
                 }
             }
         }
@@ -133,7 +157,8 @@ public class IGMLConverter {
         }
         System.out.println();
     }
-    
+
+    @Deprecated
     private List<List<String>> transitions2Paths(List<String[]> txs) {
         List<List<String>> paths = new ArrayList<>();
         Set<String> tips = new HashSet<>();
@@ -184,7 +209,7 @@ public class IGMLConverter {
         return paths;
     }
     
-
+    @Deprecated
     private void joinPaths(List<List<String>> paths, boolean reverseAllowed) {
       
         // test every couple of paths
@@ -241,99 +266,43 @@ public class IGMLConverter {
         
     }
     
-    private void joinPathsQuickButBroken(List<List<String>> paths, boolean reverseAllowed) {
-        
-        Map<String,List<List<String>>> tips = new HashMap<>();
-      
-        for(List<String> path : paths) {
-            String head = path.get(0), tail = path.get(path.size()-1);
-            
-            for(String tip : new String[]{head, tail}) {
-                
-                if(tips.containsKey(tip)) {
-                    tips.get(tip).add(path);
-                } else {
-                    List<List<String>> l = new ArrayList<>();
-                    l.add(path);
-                    tips.put(tip, l);
-                }    
-            }
-        }
-        
-        System.out.println("Tips table");
-        for(String tip : tips.keySet()) {
-            System.out.print(tip+" -> ");
-            for(List<String> p : tips.get(tip)) {
-                for(String s : p) {
-                    System.out.print(s+" ");
-                }
-                System.out.print(", ");
-            }
-            System.out.println();
-        }
-        
-        // join couples of paths
-        for(String tip : tips.keySet()) {
-            while(tips.get(tip).size()>1) {
-                List<String> path1 = tips.get(tip).get(0);    
-                List<String> path2 = tips.get(tip).get(1);
-                
-                tips.get(tip).remove(0);
-                tips.get(tip).remove(0);
-                
-                String 
-                    h1 = path1.get(0),
-                    t1 = path1.get(path1.size()-1),
-                    h2 = path2.get(0),
-                    t2 = path2.get(path2.size()-1);
-                
-                int match = h1.equals(h2) ? 0 : h1.equals(t2) ? 1 : t1.equals(h2) ? 2 : t1.equals(t2) ? 3 : 4;
-                assert match != 4;
-                
-                if(!reverseAllowed && (match == 0 || match == 3)) {
-                    continue;
-                }
-                
-                switch(match) {
-                case 0: //hh                     x-----> x----->
-                    path1.remove(0);
-                    Collections.reverse(path1);
-                    path1.addAll(path2);
-                    paths.remove(path2);
-                    break;
-                case 1: //ht                     x-----> ----->x
-                    path1.remove(0);
-                    path2.addAll(path1);
-                    paths.remove(path1);
-                    break;
-                case 2: //th                     ----->x x----->
-                    path2.remove(0);
-                    path1.addAll(path2);
-                    paths.remove(path2);
-                    break;
-                case 3: //tt                     ----->x ----->x
-                    Collections.reverse(path2);
-                    path2.remove(0);
-                    path1.addAll(path2);
-                    paths.remove(path2);
-                }
-            }
-        }
-        
-    }
-    
-    private void addPath(List<String> path) {
+    private void addPath(List<String> path, String gmlId, Relation spaceLayerRelation) {
         Way w = new Way();
         for(String id : path) {
             assert nodes.containsKey(id);
             w.addNode(nodes.get(id));
         }
+        if(null!=gmlId) {
+            w.put("name",gmlId);
+        }
         data.addPrimitive(w);
+        spaceLayerRelation.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, w));
     }
     
-    public void edges(List<EdgesType> edgesType) {
+    private static String strip(String s) {
+        return strip(s," \t\n");
+    }
+    private static String strip(String s, String chars) {
+        HashSet<String> chrs = new HashSet<>();
+        for(char c : chars.toCharArray()) {
+            chrs.add(""+c);
+        }
+        while(chrs.contains(s.substring(0, 1))) {
+            s = s.substring(1);
+        }
+        while(chrs.contains(s.substring(s.length()-1))) {
+            s = s.substring(0, s.length()-1);
+        }
+        return s;
+    }
+    
+    public void edges(List<EdgesType> edgesType, Relation spaceLayerRelation) {
+        
+        boolean useSimpleTransactions = true;
         
         List<String[]> txs = new LinkedList<>();
+        
+        IdsFactory ids = new IdsFactory();
         
         for(EdgesType type : edgesType) {
             System.out.println("EdgesType id: "+type.getId());
@@ -341,46 +310,78 @@ public class IGMLConverter {
                 TransitionType transition = transitionMember.getTransition();
                 String stateName = transition.getDescription().getTitle();
                 // I'm assuming a lot of wrong things
-                String txId = transition.getId();
                 JAXBElement<? extends AbstractCurveType> curve = transition.getGeometry().getAbstractCurve();
                 // Not used yet curves, I assume direc lines between States
                 String nodeId1, nodeId2;
-                nodeId1 = fixNodeId(transition.getConnects().get(0).getState().getId());
-                nodeId2 = fixNodeId(transition.getConnects().get(1).getState().getId());
                 
-                txs.add(new String[] {nodeId1, nodeId2});
                 
-                System.out.println(String.format("Transition %s: %s -> %s", transition.getId(), nodeId1, nodeId2));
-                /*
-                Node node1 = nodes.get(nodeId1);
-                Node node2 = nodes.get(nodeId2);
-                if(node1==null || node2==null) {
-                    System.err.println("Erore");
-                    System.exit(1);
-                }
-                System.out.println(String.format(Locale.US, "%s: %s (%s) -> %s (%s)", txId, nodeId1, node1!=null, nodeId2, node2!=null));
                 
-                if(test) {
-                    
-                } else {
+              nodeId1 = fixNodeId(transition.getConnects().get(0).getState().getId());
+              nodeId2 = fixNodeId(transition.getConnects().get(1).getState().getId());
+              
+              
+              txs.add(new String[] {nodeId1, nodeId2, ids.newId("TRANSACTION")});
+              
+              System.out.println(String.format("Transition %s: %s -> %s", transition.getId(), nodeId1, nodeId2));
+              
+                
+//                List<StatePropertyType> lspt = transition.getConnects();
+//                if(null!=lspt && lspt.size()>=2) {
+//                    
+//                    StatePropertyType spt1 = lspt.get(0), 
+//                            spt2 = lspt.get(0);
+//                    if(spt1!=null && spt2!=null) {
+//                        StateType st = spt1.getState();
+//                        if(st!=null) {
+//                            nodeId1 = fixNodeId(st.getId());
+//                        } else {
+//                            nodeId1 = strip(spt1.getHref(),"#");
+//                            System.out.println("&3 "+nodeId1);
+//                            //ERROR
+//                        }
+//                        
+//                        st = spt2.getState();
+//                        if(st!=null) {
+//                            nodeId2 = fixNodeId(st.getId());
+//                        } else {
+//                            nodeId2 = strip(spt2.getHref(),"#");
+//                            System.out.println("&4 "+nodeId2);
+//                            //ERROR
+//                        }
+//                        
+//
+//                        txs.add(new String[] {nodeId1, nodeId2, transition.getId()});
+//                        
+//                        // Save the Id
+//                        //txIds.put(new Tx(nodeId1,nodeId2),transition.getId());
+//                        
+//                        System.out.println(String.format("Transition %s: %s -> %s", transition.getId(), nodeId1, nodeId2));  
+//                            
+//                    } else {
+//                        System.err.println("&2");
+//                        // ERROR
+//                    }
+//                } else {
+//                    System.err.println("&1");
+//                    // ERROR TODO
+//                }
+                
 
-                    Way transactionWay = new Way();
-                    //Map<String, String> keys = new HashMap<>();
-                    //keys.put("indoor:highway","footway");
-                    //transactionWay.setKeys(keys);
-                    transactionWay.addNode(node1);
-                    transactionWay.addNode(node2);
-                    //fishWay.addNode((Node)data.getPrimitiveById(1234,OsmPrimitiveType.NODE));
-                    
-                    data.addPrimitive(transactionWay);
-                
-               }
-               */
             }
         }
         
-        for(List<String> path : transitions2Paths(txs)) {
-            addPath(path);
+        if(useSimpleTransactions) {
+            for(String[] tx : txs) {
+                List<String> ltx = new ArrayList<>(); 
+                ltx.add(tx[0]);
+                ltx.add(tx[1]);
+                
+                addPath(ltx, tx[2], spaceLayerRelation);
+            }
+        } else {
+            for(List<String> path : transitions2Paths(txs)) {
+                addPath(path, null, spaceLayerRelation);
+            }
         }
     }
 }

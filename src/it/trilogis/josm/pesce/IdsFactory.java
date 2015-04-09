@@ -5,6 +5,8 @@ import java.util.Map;
 
 public class IdsFactory {
 
+    // FIXME: ids have to be unique. Ever.
+    
     private final int FIRSTID = 0;
     private Map<String,Integer> lastIds;
     
