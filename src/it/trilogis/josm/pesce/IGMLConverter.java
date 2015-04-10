@@ -25,6 +25,8 @@ import org.openstreetmap.josm.data.osm.Way;
 import net.opengis.gml.v_3_2_1.AbstractCurveType;
 import net.opengis.indoorgml.v_1_0.core.*;
 
+import static it.trilogis.josm.pesce.UtilsFromPython.*;
+
 public class IGMLConverter {
     
     public DataSet data;
@@ -325,7 +327,7 @@ public class IGMLConverter {
                         if(st!=null) {
                             nodeId1 = fixNodeId(st.getId());
                         } else {
-                            nodeId1 = UtilsFromPython.strip(spt1.getHref(),"#");
+                            nodeId1 = strip(spt1.getHref(),"#");
                             System.out.println("&3 "+nodeId1);
                         }
                         
@@ -336,7 +338,6 @@ public class IGMLConverter {
                             nodeId2 = UtilsFromPython.strip(spt2.getHref(),"#");
                             System.out.println("&4 "+nodeId2);
                         }
-                        
 
                         txs.add(new String[] {nodeId1, nodeId2, transition.getId()});
                         
@@ -353,8 +354,6 @@ public class IGMLConverter {
                     System.err.println("&1");
                     // ERROR TODO
                 }
-                
-
             }
         }
         

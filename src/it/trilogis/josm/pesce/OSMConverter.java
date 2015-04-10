@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
@@ -19,6 +18,8 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
+
+import static it.trilogis.josm.pesce.UtilsFromPython.*;
 
 public class OSMConverter {
     
@@ -68,16 +69,18 @@ public class OSMConverter {
         
         layer.setId("SLs");
         
-        SpaceLayerMemberType member = new SpaceLayerMemberType();
-        layer.getSpaceLayerMember().add(member);
+       
         
+        print(""+relations.size());
         for(Relation relation : relations) {
             if(relation.hasKey("type") && relation.hasKey("name") && relation.get("type").equals(Constants.OSM_RELATION_TYPE_SPACELAYER)) {
+                SpaceLayerMemberType member = new SpaceLayerMemberType();
+                layer.getSpaceLayerMember().add(member);
                 // This id has to come from the relation: should I put both nodes and edges into the relationship? Yes
-                member.setSpaceLayer(spaceLayerTypeBuilder(relation.get("name"), nodes(relation), edges(relation)));        
+                member.setSpaceLayer(spaceLayerTypeBuilder(relation.get("name"), nodes(relation), edges(relation)));   
+                print(relation.get("name"));     
             }
         }
-        
         
         return graph;
     }
@@ -87,13 +90,13 @@ public class OSMConverter {
      */
     private Map<String,List<TransitionType>> transitionReferences; // state id -> transactions
     
-    private NodesType nodes(Relation relation) throws ConversionException {
+    private NodesType nodes(Relation spaceLayerRelation) throws ConversionException {
         NodesType nodesType = new NodesType();
         transitionReferences = new HashMap<>();
         
         nodesType.setId(idsFactory.newId("Nodes"));
         
-        for(RelationMember member : relation.getMembers()) {
+        for(RelationMember member : spaceLayerRelation.getMembers()) {
             if(member.getRole().equals(Constants.OSM_RELATION_ROLE_STATE)) {
                 Node n = member.getNode();
                 
@@ -201,13 +204,13 @@ public class OSMConverter {
     // Builders
     
     //private StateMemberType uno=null,due=null,tre=null;
-    private EdgesType edges(Relation relation)  {
+    private EdgesType edges(Relation spaceLayerRelation)  {
         EdgesType edgesType = new EdgesType();
         LineStringType tmpTransitionLine;// PLACEHOLDER
         edgesType.setId(idsFactory.newId("Edges"));
 
         
-        for(RelationMember member : relation.getMembers()) {
+        for(RelationMember member : spaceLayerRelation.getMembers()) {
             if(member.getRole().equals(Constants.OSM_RELATION_ROLE_TRANSITION)) {
                 Way w = member.getWay();
                 

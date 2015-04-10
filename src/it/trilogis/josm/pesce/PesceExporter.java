@@ -149,10 +149,12 @@ public class PesceExporter extends FileExporter {
         IndoorFeaturesType document;
         try {
             document = OSMConverter.convert(layer.data);
-            Marshalling.marshal(document, getOutputStream(file));
+            try(OutputStream os = getOutputStream(file)){
+                Marshalling.marshal(document, os);
+                os.close();
+            }
         } catch (ConversionException e) {
             e.printStackTrace();
         }
-        
     }
 }
