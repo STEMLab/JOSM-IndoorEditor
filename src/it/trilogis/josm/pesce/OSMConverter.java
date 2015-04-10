@@ -82,6 +82,9 @@ public class OSMConverter {
         return graph;
     }
     
+    /*
+     * This is needed by edges in order to add references of edges into nodes
+     */
     private Map<String,List<TransitionType>> transitionReferences; // state id -> transactions
     
     private NodesType nodes(Relation relation) throws ConversionException {

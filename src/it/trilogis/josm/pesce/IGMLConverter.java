@@ -279,23 +279,6 @@ public class IGMLConverter {
         spaceLayerRelation.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, w));
     }
     
-    private static String strip(String s) {
-        return strip(s," \t\n");
-    }
-    private static String strip(String s, String chars) {
-        HashSet<String> chrs = new HashSet<>();
-        for(char c : chars.toCharArray()) {
-            chrs.add(""+c);
-        }
-        while(chrs.contains(s.substring(0, 1))) {
-            s = s.substring(1);
-        }
-        while(chrs.contains(s.substring(s.length()-1))) {
-            s = s.substring(0, s.length()-1);
-        }
-        return s;
-    }
-    
     public void edges(List<EdgesType> edgesType, Relation spaceLayerRelation) {
         
         boolean useSimpleTransactions = true;
@@ -314,57 +297,62 @@ public class IGMLConverter {
                 // Not used yet curves, I assume direc lines between States
                 String nodeId1, nodeId2;
                 
-                
-                
-              nodeId1 = fixNodeId(transition.getConnects().get(0).getState().getId());
-              nodeId2 = fixNodeId(transition.getConnects().get(1).getState().getId());
-              
-              
-              txs.add(new String[] {nodeId1, nodeId2, ids.newId("TRANSACTION")});
-              
-              System.out.println(String.format("Transition %s: %s -> %s", transition.getId(), nodeId1, nodeId2));
-              
-                
+//                
 //                List<StatePropertyType> lspt = transition.getConnects();
 //                if(null!=lspt && lspt.size()>=2) {
+//                    System.out.println(":O "+lspt.size());
 //                    
-//                    StatePropertyType spt1 = lspt.get(0), 
-//                            spt2 = lspt.get(0);
-//                    if(spt1!=null && spt2!=null) {
-//                        StateType st = spt1.getState();
-//                        if(st!=null) {
-//                            nodeId1 = fixNodeId(st.getId());
-//                        } else {
-//                            nodeId1 = strip(spt1.getHref(),"#");
-//                            System.out.println("&3 "+nodeId1);
-//                            //ERROR
-//                        }
-//                        
-//                        st = spt2.getState();
-//                        if(st!=null) {
-//                            nodeId2 = fixNodeId(st.getId());
-//                        } else {
-//                            nodeId2 = strip(spt2.getHref(),"#");
-//                            System.out.println("&4 "+nodeId2);
-//                            //ERROR
-//                        }
-//                        
-//
-//                        txs.add(new String[] {nodeId1, nodeId2, transition.getId()});
-//                        
-//                        // Save the Id
-//                        //txIds.put(new Tx(nodeId1,nodeId2),transition.getId());
-//                        
-//                        System.out.println(String.format("Transition %s: %s -> %s", transition.getId(), nodeId1, nodeId2));  
-//                            
-//                    } else {
-//                        System.err.println("&2");
-//                        // ERROR
-//                    }
-//                } else {
-//                    System.err.println("&1");
-//                    // ERROR TODO
+//                    
 //                }
+//                
+//              nodeId1 = fixNodeId(transition.getConnects().get(0).getState().getId());
+//              nodeId2 = fixNodeId(transition.getConnects().get(1).getState().getId());
+//              
+//              
+//              txs.add(new String[] {nodeId1, nodeId2, transition.getId()});
+//              
+//              System.out.println(String.format("Transition %s: %s -> %s", transition.getId(), nodeId1, nodeId2));
+              
+                
+                List<StatePropertyType> lspt = transition.getConnects();
+                if(null!=lspt && lspt.size()>=2) {
+                    
+                    StatePropertyType
+                        spt1 = lspt.get(0), 
+                        spt2 = lspt.get(1);
+                    if(spt1!=null && spt2!=null) {
+                        StateType st = spt1.getState();
+                        if(st!=null) {
+                            nodeId1 = fixNodeId(st.getId());
+                        } else {
+                            nodeId1 = UtilsFromPython.strip(spt1.getHref(),"#");
+                            System.out.println("&3 "+nodeId1);
+                        }
+                        
+                        st = spt2.getState();
+                        if(st!=null) {
+                            nodeId2 = fixNodeId(st.getId());
+                        } else {
+                            nodeId2 = UtilsFromPython.strip(spt2.getHref(),"#");
+                            System.out.println("&4 "+nodeId2);
+                        }
+                        
+
+                        txs.add(new String[] {nodeId1, nodeId2, transition.getId()});
+                        
+                        // Save the Id
+                        //txIds.put(new Tx(nodeId1,nodeId2),transition.getId());
+                        
+                        System.out.println(String.format("Transition %s: %s -> %s", transition.getId(), nodeId1, nodeId2));  
+                            
+                    } else {
+                        System.err.println("&2");
+                        // ERROR
+                    }
+                } else {
+                    System.err.println("&1");
+                    // ERROR TODO
+                }
                 
 
             }
