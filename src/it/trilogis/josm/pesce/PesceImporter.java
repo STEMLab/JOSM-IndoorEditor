@@ -1,6 +1,7 @@
 package it.trilogis.josm.pesce;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
+import it.trilogis.josm.pesce.SetContextHandler.Context;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -85,6 +86,14 @@ public class PesceImporter extends OsmImporter {
     
     protected DataSet parsePesce(InputStream in, ProgressMonitor instance)
             throws IllegalDataException {
+        
+        // Test: print context
+        Main.debug("i-locate upload context");
+        Map<String,String> context = Context.getInstance().store; 
+        for(String k : context.keySet()) {
+            Main.debug(String.format("%s -> %s",k,context.get(k)));
+        }
+        
         DataSet data = new DataSet();
         
         data.setUploadDiscouraged(true);

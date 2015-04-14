@@ -5,6 +5,9 @@ import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.io.FileExporter;
 import org.openstreetmap.josm.io.FileImporter;
+import org.openstreetmap.josm.io.remotecontrol.RemoteControl;
+import org.openstreetmap.josm.io.remotecontrol.RequestProcessor;
+import org.openstreetmap.josm.io.remotecontrol.handler.ImportHandler;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.actions.ExtensionFileFilter;
@@ -26,7 +29,10 @@ public class PescePlugin extends Plugin {
         
         ExtensionFileFilter.importers.add(importer);
         ExtensionFileFilter.exporters.add(exporter);
-        //
+
+        new RemoteControl().addRequestHandler(
+                SetContextHandler.command,
+                SetContextHandler.class);
     }
     
     @Override
