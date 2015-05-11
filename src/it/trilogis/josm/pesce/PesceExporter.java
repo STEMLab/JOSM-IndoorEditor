@@ -71,6 +71,10 @@ public class PesceExporter extends FileExporter {
 
     @Override
     public void exportData(File file, Layer layer) throws IOException {
+        
+        // TEST XXX TODO
+        new FilterIndoorLevel().show(0);
+        
         exportData(file, layer, false);
     }
 

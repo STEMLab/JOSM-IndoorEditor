@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package it.trilogis.josm.pesce;
 
+import org.openstreetmap.josm.Main;
+import org.openstreetmap.josm.data.osm.FilterMatcher;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.io.FileExporter;
@@ -33,6 +35,9 @@ public class PescePlugin extends Plugin {
         new RemoteControl().addRequestHandler(
                 SetContextHandler.command,
                 SetContextHandler.class);
+        
+        FilterIndoorLevel filter = new FilterIndoorLevel();
+        FilterMatcher fm = new FilterMatcher();
     }
     
     @Override
