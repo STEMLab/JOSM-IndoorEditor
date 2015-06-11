@@ -150,18 +150,14 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
              
              Main.debug(label);
 
-             Integer level;
+             int level;
              if(FloorsFilterDialog.TREELABELALL.equals(label)) {
                  // Do not filter levels
-                 level = null;
+                 level = FilterIndoorLevel.ALLLEVELS;
              } else {
                  level = Integer.parseInt(label);
              }
-             if(null != filterLevel) {
-                 filterLevel.show(level);
-             } else {
-                 Main.error("WTF: filterLevel == null");
-             }
+             filterLevel.show(level);
              
              if(p.getPathCount() > TREEFLOOR) {
                  // TODO: The level 3 () is selected: the state

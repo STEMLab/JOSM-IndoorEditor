@@ -49,7 +49,7 @@ public class FilterIndoorLevel {
                 if(p.getKeys().containsKey(LEVEL) || null != wayLevel) {
                     int primitiveLevel = p.getKeys().containsKey(LEVEL) ? Integer.parseInt(p.get(LEVEL)) : wayLevel;
                     Main.debug("Modify this. Now="+primitiveLevel);
-                    if(primitiveLevel == showLevel) {
+                    if(primitiveLevel == showLevel || FilterIndoorLevel.ALLLEVELS == showLevel) {
                         // show
                         Main.debug("show");
                         //if(p.isDisabled()) changed = true; // FIXME
