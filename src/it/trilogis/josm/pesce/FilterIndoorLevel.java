@@ -13,25 +13,34 @@ import org.openstreetmap.josm.data.osm.FilterMatcher.FilterType;
 
 public class FilterIndoorLevel {
 
+    public final static int ALLLEVELS = -1000000000;
+    public final static int PREVIOUSLEVEL = -1000000001;
+    
     private DataSet ds;
     private final String LEVEL = "indoor:level"; // TODO: move to...
     
+    private int currentLevel;
+    
     public FilterIndoorLevel() {
-        ds = Main.main.getCurrentDataSet();
+        updateDataset();
         
     }
     
-    public void showAll() {
-        show(null);
+    public void updateDataset() {
+        ds = Main.main.getCurrentDataSet();
     }
-    public void show(Integer showLevel) {
-        boolean changed = false || true; // FIXME
+    
+    public void showAll() {
+        show(ALLLEVELS);
+    }
+    public void show(int showLevel) {
+        boolean changed = false;
         Collection<OsmPrimitive> deselect = new HashSet<>();
         Main.debug("Filter on level="+showLevel);
-        try {
+        try
+        {
             ds.beginUpdate();
             final Collection<OsmPrimitive> all = ds.allNonDeletedCompletePrimitives();
-            
             for (OsmPrimitive p : all) {
                 Main.debug(p instanceof Relation ? "Relation" : p instanceof Way ? "Way" : p instanceof Node ? "Node" : "Error");
                 
@@ -40,12 +49,12 @@ public class FilterIndoorLevel {
                 if(p.getKeys().containsKey(LEVEL) || null != wayLevel) {
                     int primitiveLevel = p.getKeys().containsKey(LEVEL) ? Integer.parseInt(p.get(LEVEL)) : wayLevel;
                     Main.debug("Modify this. Now="+primitiveLevel);
-                    if(null == showLevel || primitiveLevel == showLevel) {
+                    if(primitiveLevel == showLevel) {
                         // show
                         Main.debug("show");
                         //if(p.isDisabled()) changed = true; // FIXME
                         //p.setDisabledState(false);
-                        p.unsetDisabledState();
+                        changed |= p.unsetDisabledState();
                     } else {
                         // disable
                         Main.debug("disable");
@@ -53,7 +62,7 @@ public class FilterIndoorLevel {
                         //p.setDisabledState(true);
                         //p.setVisible(true);
                         changed |= p.setDisabledState(false);
-                        p.setDisabledType(true); // E` un filtro esplicito? Pare
+                        p.setDisabledType(true); // Explicit filter
                     }
                     
                     if (p.isSelected() && p.isDisabled()) {
@@ -64,8 +73,10 @@ public class FilterIndoorLevel {
             }
             
             // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
-        } finally {
+        } 
+        finally {
             ds.endUpdate();
+            Main.debug("changed="+changed);
             if(changed) repaint();
             
             if(!deselect.isEmpty()) ds.clearSelection(deselect);
@@ -75,6 +86,7 @@ public class FilterIndoorLevel {
     
     private void repaint() {
         if (Main.isDisplayingMapView()) {
+            Main.debug("Main.map.mapView.repaint();");
             Main.map.mapView.repaint();
             //Main.map.filterDialog.updateDialogHeader();
         }

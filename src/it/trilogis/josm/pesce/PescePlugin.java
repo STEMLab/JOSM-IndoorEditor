@@ -1,6 +1,8 @@
 // License: GPL. For details, see LICENSE file.
 package it.trilogis.josm.pesce;
 
+import it.trilogis.josm.pesce.dialogs.FloorsFilterDialog;
+
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.data.osm.FilterMatcher;
 import org.openstreetmap.josm.gui.MapFrame;
@@ -48,6 +50,12 @@ public class PescePlugin extends Plugin {
     
     @Override
     public void mapFrameInitialized(MapFrame oldFrame, MapFrame newFrame) {
+        Main.debug(String.format("Signal: mapFrameInitialized %s %s", null==oldFrame ? "null" : "defined", null==newFrame ? "null" : "defined"));
+        
+        // if new frame is just created
+        if(null==oldFrame && null!=newFrame) {
+          newFrame.addToggleDialog(new FloorsFilterDialog());    
+        }
         
     }
 }
