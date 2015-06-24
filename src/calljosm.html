@@ -1,0 +1,37 @@
+<script type="text/javascript">
+
+
+ // Example geojson: http://pastebin.com/raw.php?i=sC8nfQgX
+function test(t, e) {
+    var n = !1,
+        o = "https:" === document.location.protocol ? "https://127.0.0.1:8112/" : "http://127.0.0.1:8111/",
+        a = {
+            left: t.getWest() - 1e-4,
+            top: t.getNorth() + 1e-4,
+            right: t.getEast() + 1e-4,
+            bottom: t.getSouth() - 1e-4
+        };
+    e && (a.select = e.type + e.id);
+    var r = $("<iframe>").hide().appendTo("body").attr("src", o + querystring.stringify(a)).on("load", function() {
+        $(this).remove(), n = !0
+    });
+    return setTimeout(function() {
+        n || (alert(I18n.t("site.index.remote_failed")), r.remove())
+    }, 1e3), !1
+}
+
+var t = {
+  getWest : function(){return 24.55},
+   getNorth : function(){return 24.55},
+   getEast : function(){return 24.55},
+   getSouth : function(){return 24.55},
+};
+
+var e = {
+  id: 3,
+  type: 'bo',
+}
+
+test(t);
+  
+</script>

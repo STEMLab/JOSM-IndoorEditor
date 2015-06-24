@@ -39,4 +39,7 @@ public class Constants {
     public static final String OSM_RELATION_ROLE_TRANSITION = "transition";
     public static final String OSM_KEY_LEVEL = "indoor:level";
     public static final String SRID4326 = "EPSG:4326";
+    public static final int ALLLEVELS = -1000000000;
+    public static final int PREVIOUSLEVEL = -1000000001;
+    public static final int MISSEDLEVEL = -1000000002;
 }

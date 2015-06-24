@@ -13,13 +13,12 @@ import org.openstreetmap.josm.data.osm.FilterMatcher.FilterType;
 
 public class FilterIndoorLevel {
 
-    public final static int ALLLEVELS = -1000000000;
-    public final static int PREVIOUSLEVEL = -1000000001;
+
     
     private DataSet ds;
-    private final String LEVEL = "indoor:level"; // TODO: move to...
+    public final static String LEVEL = "indoor:level"; // TODO: move to...
     
-    private int currentLevel;
+    private int currentLevel = Constants.ALLLEVELS;
     
     public FilterIndoorLevel() {
         updateDataset();
@@ -31,12 +30,17 @@ public class FilterIndoorLevel {
     }
     
     public void showAll() {
-        show(ALLLEVELS);
+        show(Constants.ALLLEVELS);
     }
     public void show(int showLevel) {
         boolean changed = false;
         Collection<OsmPrimitive> deselect = new HashSet<>();
         Main.debug("Filter on level="+showLevel);
+        
+        if(Constants.PREVIOUSLEVEL == showLevel) {
+            showLevel = currentLevel;
+        }
+        
         try
         {
             ds.beginUpdate();
@@ -49,7 +53,7 @@ public class FilterIndoorLevel {
                 if(p.getKeys().containsKey(LEVEL) || null != wayLevel) {
                     int primitiveLevel = p.getKeys().containsKey(LEVEL) ? Integer.parseInt(p.get(LEVEL)) : wayLevel;
                     Main.debug("Modify this. Now="+primitiveLevel);
-                    if(primitiveLevel == showLevel || FilterIndoorLevel.ALLLEVELS == showLevel) {
+                    if(primitiveLevel == showLevel || Constants.ALLLEVELS == showLevel) {
                         // show
                         Main.debug("show");
                         //if(p.isDisabled()) changed = true; // FIXME
@@ -72,7 +76,7 @@ public class FilterIndoorLevel {
                 
             }
             
-            // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
+        // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
         } 
         finally {
             ds.endUpdate();
@@ -81,6 +85,7 @@ public class FilterIndoorLevel {
             
             if(!deselect.isEmpty()) ds.clearSelection(deselect);
             
+            currentLevel = showLevel;
         }
     }
     
