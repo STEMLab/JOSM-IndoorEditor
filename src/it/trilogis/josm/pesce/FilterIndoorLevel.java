@@ -41,7 +41,8 @@ public class FilterIndoorLevel {
             showLevel = currentLevel;
         }
         
-        try
+        updateDataset();
+        //try
         {
             ds.beginUpdate();
             final Collection<OsmPrimitive> all = ds.allNonDeletedCompletePrimitives();
@@ -78,7 +79,8 @@ public class FilterIndoorLevel {
             
         // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
         } 
-        finally {
+        //finally 
+        {
             ds.endUpdate();
             Main.debug("changed="+changed);
             if(changed) repaint();

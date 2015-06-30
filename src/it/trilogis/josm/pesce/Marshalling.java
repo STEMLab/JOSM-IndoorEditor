@@ -2,6 +2,8 @@ package it.trilogis.josm.pesce;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
@@ -82,10 +84,15 @@ public class Marshalling {
         return true;
     }
     
-    public static void marshal(IndoorFeaturesType document, OutputStream output) {
+    public static void doMarshal(IndoorFeaturesType document, Writer writer, OutputStream stream) {
+
+        if(null == writer && null == stream) {
+            System.out.println("[doMarshal] Writer nor Stream are defined");
+            return;
+        }
         
         if(!checkIntegrity(document)) {
-            System.err.println("Problems with the document");
+            System.err.println("[doMarshal] Problems with the document");
             return;
         }
         JAXBContext jaxbContext;
@@ -94,13 +101,23 @@ public class Marshalling {
             Marshaller m = jaxbContext.createMarshaller();
             // ADd custom mapping:
             // m.setProperty("com.sun.xml.bind.namespacePrefixMapper", new GMLNamespaceMapper());
-            m.marshal(document, output);
+            if(null != writer) {
+                m.marshal(document, writer);
+            } else if(null != stream) {
+                m.marshal(document, stream);
+            }
         } catch (JAXBException e) {
             e.printStackTrace();
             return;
-        }
-        
-        
+        }        
+    }
+    
+    public static void marshal(IndoorFeaturesType document, Writer writer) {
+        doMarshal(document,writer,null);
+    }
+    
+    public static void marshal(IndoorFeaturesType document, OutputStream stream) {
+        doMarshal(document,null,stream);
     }
     
     private static void error(String msg) {

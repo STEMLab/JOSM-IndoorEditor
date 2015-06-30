@@ -4,11 +4,16 @@ package it.trilogis.josm.pesce.dialogs;
 import static org.openstreetmap.josm.tools.I18n.tr;
 import it.trilogis.josm.pesce.Constants;
 import it.trilogis.josm.pesce.FilterIndoorLevel;
+import it.trilogis.josm.pesce.PescePlugin;
+import it.trilogis.josm.pesce.PescePlugin.UploadInfo;
+import it.trilogis.josm.pesce.serverconnection.IlocateUploadTask;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -28,6 +33,8 @@ import java.util.Stack;
 import javax.swing.AbstractAction;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
@@ -44,6 +51,7 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Filter;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.PrimitiveId;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
@@ -61,6 +69,8 @@ import org.openstreetmap.josm.data.osm.event.WayNodesChangedEvent;
 import org.openstreetmap.josm.gui.SideButton;
 import org.openstreetmap.josm.gui.dialogs.FilterTableModel;
 import org.openstreetmap.josm.gui.dialogs.ToggleDialog;
+import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
+import org.openstreetmap.josm.io.BoundingBoxDownloader;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.InputMapUtils;
 import org.openstreetmap.josm.tools.MultikeyActionsHandler;
@@ -84,11 +94,16 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
     private FloorMutableTreeNode root = null;
 
+    private TreePath[] sp;
+
     /**
      * Constructs a new {@code FilterDialog}
      */
     public FloorsFilterDialog() {
         super(tr("Floors selector"), "floors", tr("Select the floor to view"), null, 162);
+        sp = new TreePath[2];
+        sp[0] = null;
+        sp[1] = null;
         setIsButtonHiding(ButtonHidingType.ALWAYS_HIDDEN);
         filterLevel = new FilterIndoorLevel();
         build();
@@ -197,7 +212,12 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                     root.add(floor);
                     Main.debug("Add to root "+primitiveLevel+" "+floor);
                 }
-                floor.add(new FloorMutableTreeNode(primitive.getName(), false));
+                
+
+                PrimitiveId osmId = primitive.getPrimitiveId();
+                NodeUserObject nodeUserObj = new NodeUserObject(osmId, primitive.getName());
+                
+                floor.add(new FloorMutableTreeNode(nodeUserObj, false));
             }
 
             // Order all children
@@ -237,7 +257,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             Main.debug("Init tree");
             tree = new JTree(root = new FloorMutableTreeNode("Floors"));
             
-            add(tree, BorderLayout.CENTER);
+            JScrollPane scrollable = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+          
+            add(scrollable, BorderLayout.CENTER);
         } else {
             Main.debug("get tree");
             root = (FloorMutableTreeNode) tree.getModel().getRoot();
@@ -281,31 +303,61 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(TreeSelectionEvent e) {
+                
+                if(2 == tree.getSelectionCount()) {
+                    // I sected 2 objects, do nothing
+                    return;
+                }
+                
                 filterLevel.updateDataset(); // I don't know when this is needed
                 //selectedLabel.setText(e.getPath().toString());
                 TreePath p = e.getPath();
 
                 //Main.debug("@"+tree.getRowForPath(p));
-                Main.debug("[valueChanged] " + ((String) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
+                if(p.getPathCount() == TREESTATES) {
+                    // A node is selected
+
+                    Main.debug("[valueChanged] Node: " + ((NodeUserObject) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
+                } else {
+                    Main.debug("[valueChanged] Not Node: " + ((String) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
+                }
 
                 DefaultMutableTreeNode floorNode = (DefaultMutableTreeNode) p.getPath()[TREEFLOOR - 1];
 
-                String label = (String) floorNode.getUserObject();
+                String floorLabel = (String) floorNode.getUserObject();
 
-                Main.debug(label);
+                Main.debug(floorLabel);
 
                 int level;
-                if (FloorsFilterDialog.TREELABELALL.equals(label)) {
+                if (FloorsFilterDialog.TREELABELALL.equals(floorLabel)) {
                     // Do not filter levels
                     level = Constants.ALLLEVELS;
                 } else {
-                    level = Integer.parseInt(label);
+                    level = Integer.parseInt(floorLabel);
                 }
                 filterLevel.show(level);
 
                 if (p.getPathCount() > TREEFLOOR) {
                     // TODO: The level 3 () is selected: the state
-                    Main.debug("D: You are clicking states");
+                    Main.debug("You are clicking states, we'll work on selection here");
+                    
+                    // I can work on selection here.
+                    // Policy: keep selected 2 states clicked.
+                    //         If 2 states is yet seceted, start from 
+                    //         the begin and select only the clicked state.
+                    //         click a floor cancel states selection
+                    if(null == sp[0] || null != sp[0] && null != sp[1]) {
+                        sp[0] = p;
+                        sp[1] = null;
+                    } else if(null == sp[1]) {
+                        sp[1] = p;
+                        tree.setSelectionPaths(sp);
+                    } else {
+                        Main.error("[FloorsFilterDialog.build.addTreeSelectionListener] Bug!");
+                    }
+                } else {
+                    sp[0] = null;
+                    sp[1] = null;
                 }
             }
         });
@@ -318,15 +370,93 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
          }
          @Override
          public void actionPerformed(ActionEvent e) {
-             Main.debug("Upload all datasets! (Or refresh filters)");
+             Main.debug("Upload all datasets!");
              
-             filterLevel.show(Constants.PREVIOUSLEVEL);
+             for(UploadInfo info : PescePlugin.getUploadInfo()) {
+                 Main.debug("[FloorsFilterDialog.uploadButton.actionPerformed] "+info.layerName+" "+info.dataSet.toString());
+                 IlocateUploadTask task = new IlocateUploadTask(info.layerName, NullProgressMonitor.INSTANCE, false);
+                 
+                 
+                 Main.worker.submit(task);
+             }
+             
+             //filterLevel.show(Constants.PREVIOUSLEVEL);
              
              if (Main.isDisplayingMapView()) {
                  Main.map.mapView.repaint();
                 /// Main.map.filterDialog.updateDialogHeader();
              }
          }});
+     
+     SideButton linkButton = new SideButton(new AbstractAction() {
+         {
+             putValue(NAME, tr("Link"));
+             putValue(SHORT_DESCRIPTION,  tr("Select 2 states and link them"));
+             putValue(SMALL_ICON, ImageProvider.get("dialogs","linknodes"));
+         }
+         @Override
+         public void actionPerformed(ActionEvent e) {
+             Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] Create a link");
+
+             // TODO: take the 2 selected nodes and create a link 
+             Main.debug("Selected count: "+tree.getSelectionCount());
+             TreePath[] paths = tree.getSelectionPaths();
+             if(2 == tree.getSelectionCount() && paths[0].getPathCount() == TREESTATES && paths[1].getPathCount() == TREESTATES) {
+                 // GOOD
+                 NodeUserObject treeNode1 =  (NodeUserObject) ((FloorMutableTreeNode) paths[0].getLastPathComponent()).getUserObject();
+                 NodeUserObject treeNode2 =  (NodeUserObject) ((FloorMutableTreeNode) paths[1].getLastPathComponent()).getUserObject();
+
+                 // TODO: link them
+                 
+                 Main.debug(treeNode1+","+treeNode2);
+                 
+                 DataSet ds = Main.main.getCurrentDataSet();
+                 
+                 Node node1 = (Node) ds.getPrimitiveById(treeNode1.id);
+                 Node node2 = (Node) ds.getPrimitiveById(treeNode2.id);
+
+                 // Problem:
+                 // The link between A and B has to be unique
+                 Set<Long> node1Ways = new HashSet<>(), node2Ways = new HashSet<>();
+                 for(OsmPrimitive ref : node1.getReferrers()) {
+                     if(ref instanceof Way) {
+                         node1Ways.add(ref.getUniqueId());
+                     }
+                 }
+                 for(OsmPrimitive ref : node2.getReferrers()) {
+                     if(ref instanceof Way) {
+                         node2Ways.add(ref.getUniqueId());
+                     }
+                 }
+                 
+                 if (Collections.disjoint(node1Ways, node2Ways)) {
+                 
+                     Way link = new Way();
+    
+                     link.addNode(node1);
+                     link.addNode(node2);
+    
+                     link.put("name","IL"+node1.getName()+node2.getName());
+                     
+                     ds.addPrimitive(link);
+                 } else {
+                     // TODO: create a message for the user: this link exists yet.
+                     Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] This link exists yet");
+                 }
+                 
+             } else {
+                 // BAD
+                 // TODO error message
+             }
+             
+             //filterLevel.show(Constants.PREVIOUSLEVEL);
+             
+             if (Main.isDisplayingMapView()) {
+                 Main.map.mapView.repaint();
+                /// Main.map.filterDialog.updateDialogHeader();
+             }
+         }});
+     
      //uploadButton.setPreferredSize(new Dimension(200, 100));
      
 //     SideButton downButton = new SideButton(new AbstractAction() {
@@ -345,9 +475,21 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         //this.add(new JLabel("Container doesn't use BorderLayout!"),BorderLayout.PAGE_START);
         //this.add(downButton,BorderLayout.CENTER);
         
-        
-         this.add(uploadButton,BorderLayout.PAGE_END);
+         final JPanel buttonRowPanel = new JPanel(Main.pref.getBoolean("dialog.align.left", false)
+                 ? new FlowLayout(FlowLayout.LEFT) : new GridLayout(1, 2));
 
+         buttonRowPanel.add(uploadButton);
+         buttonRowPanel.add(linkButton);
+         
+         this.add(buttonRowPanel,BorderLayout.SOUTH);
+         
+//         this.add(uploadButton,BorderLayout.PAGE_END);
+//         this.add(linkButton,BorderLayout.PAGE_END);  
+//         
+//         createLayout(this, true, Arrays.asList(new SideButton[] {
+//                 uploadButton, linkButton
+//         }));
+         
     }
 
     @Override
@@ -478,4 +620,19 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         }
     }
 
+    static private class NodeUserObject {
+        public String label;
+        public PrimitiveId id;
+        
+        @Override
+        public String toString() {
+            return label;
+        }
+        
+        public NodeUserObject(PrimitiveId id, String label) {
+            this.id = id;
+            this.label = label;
+        }
+    }
+    
 }

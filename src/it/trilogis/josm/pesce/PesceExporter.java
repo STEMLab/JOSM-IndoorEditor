@@ -110,7 +110,7 @@ public class PesceExporter extends FileExporter {
                 Utils.copyFile(file, tmpFile);
             }
 
-            doSave(file, layer);
+            doSave(file, layer.data);
             if (noBackup || !Main.pref.getBoolean("save.keepbackup", false)) {
                 if (tmpFile != null) {
                     tmpFile.delete();
@@ -144,18 +144,28 @@ public class PesceExporter extends FileExporter {
         }
     }
 
-    protected void doSave(File file, OsmDataLayer layer) throws IOException, FileNotFoundException {
-        
-        
+    private static void doSave(File file, Writer writer, DataSet data) throws IOException, FileNotFoundException {
         IndoorFeaturesType document;
         try {
-            document = OSMConverter.convert(layer.data);
-            try(OutputStream os = getOutputStream(file)){
-                Marshalling.marshal(document, os);
-                os.close();
+            document = OSMConverter.convert(data);
+            if(null != file) {
+                try(OutputStream os = getOutputStream(file)){
+                    Marshalling.marshal(document, os);
+                    os.close();
+                }
+            } else if(null != writer) {
+                Marshalling.marshal(document, writer);
             }
         } catch (ConversionException e) {
             e.printStackTrace();
         }
+    }
+    
+    public static void doSave(Writer writer, DataSet data) throws IOException, FileNotFoundException  {
+        doSave(null, writer, data);
+    }
+    
+    public static void doSave(File file, DataSet data) throws IOException, FileNotFoundException  {
+        doSave(file, null, data);
     }
 }

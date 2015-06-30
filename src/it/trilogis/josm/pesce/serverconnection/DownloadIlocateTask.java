@@ -1,7 +1,9 @@
-package it.trilogis.josm.pesce;
+package it.trilogis.josm.pesce.serverconnection;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
-
+import it.trilogis.josm.pesce.PesceImporter;
+import it.trilogis.josm.pesce.PescePlugin;
+import it.trilogis.josm.pesce.PescePlugin.LayerType;
 import it.trilogis.josm.pesce.PescePlugin.UploadInfo;
 
 import java.io.IOException;
@@ -97,9 +99,10 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
 
  class DownloadTask extends AbstractInternalTask {
      private String url;
+     private LayerType type;
 
      public DownloadTask(boolean newLayer, String url, ProgressMonitor progressMonitor) {
-         super(newLayer, tr("Downloading IGML data"), progressMonitor, false);
+         super(newLayer, tr("Downloading i-locate data"), progressMonitor, false);
          this.url = url;
      }
 
@@ -111,6 +114,7 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
              ProgressMonitor subMonitor = progressMonitor.createSubTaskMonitor(ProgressMonitor.ALL_TICKS, false);
              InputStream in = new URL(url).openStream();
              dataSet = importer.parseDataSet(in, subMonitor);
+             type = LayerType.IGML;
          } catch(Exception e) {
              if (isCanceled())
                  return;
@@ -140,10 +144,7 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
      }
      
      private void saveUploadInfo() {
-         UploadInfo info = new UploadInfo(newLayerName, dataSet);
-         
-         
-         PescePlugin.getUploadInfo().add(info);
+         PescePlugin.addUploadInfo(newLayerName, dataSet, url, type);
      }
 
 

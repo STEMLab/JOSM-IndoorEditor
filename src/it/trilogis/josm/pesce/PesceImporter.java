@@ -59,7 +59,7 @@ public class PesceImporter extends OsmImporter {
     }
 
     @Override
-    protected DataSet parseDataSet(InputStream in, ProgressMonitor monitor)
+    public DataSet parseDataSet(InputStream in, ProgressMonitor monitor)
             throws IllegalDataException {
 
         IndoorFeaturesType root;

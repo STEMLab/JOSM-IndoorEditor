@@ -2,14 +2,18 @@
 package it.trilogis.josm.pesce;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import it.trilogis.josm.pesce.dialogs.FloorsFilterDialog;
+import it.trilogis.josm.pesce.serverconnection.IlocateImporter;
 
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.FilterMatcher;
 import org.openstreetmap.josm.gui.MapFrame;
+import org.openstreetmap.josm.gui.layer.Layer;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.io.FileExporter;
 import org.openstreetmap.josm.io.FileImporter;
@@ -75,19 +79,45 @@ public class PescePlugin extends Plugin {
     }
     
     // Save here information about downloaded layers
-    static List<UploadInfo> getUploadInfo() {
+    public static enum LayerType {
+        IGML,
+        GEOJSON
+    }
+    public static List<UploadInfo> getUploadInfo() {
         if(null == uploadInfo) {
             uploadInfo = new ArrayList<>();
         }
         return uploadInfo;
     }
     
+    public static void addUploadInfo(String layerName, DataSet dataSet, String url, LayerType type) {
+        Main.debug("[PescePlugin.addUploadInfo] "+layerName+" "+dataSet.toString()+" "+url);
+        getUploadInfo().add(new UploadInfo(layerName, dataSet, url, type));
+    }
+    
     public static class UploadInfo {
         public String layerName;
         public DataSet dataSet;
-        public UploadInfo(String layerName, DataSet dataSet) {
+        public String url;
+        public LayerType type;
+        public UploadInfo(String layerName, DataSet dataSet, String url, LayerType type) {
             this.layerName = layerName;
             this.dataSet = dataSet;
+            this.url = url;
+            this.type = type;
         }
+    }
+    
+    // Utility
+    
+    
+    static public OsmDataLayer getLayer(DataSet data) {
+        if (!Main.isDisplayingMapView()) return null;
+        Collection<Layer> layers = Main.map.mapView.getAllLayersAsList();
+        for (Layer layer : layers) {
+            if (layer instanceof OsmDataLayer && ((OsmDataLayer) layer).data==data)
+                return (OsmDataLayer) layer;
+        }
+        return null;
     }
 }
