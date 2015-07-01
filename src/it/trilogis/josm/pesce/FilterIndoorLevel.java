@@ -10,6 +10,7 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.FilterMatcher.FilterType;
+import org.openstreetmap.josm.gui.layer.Layer;
 
 public class FilterIndoorLevel {
 
@@ -68,13 +69,13 @@ public class FilterIndoorLevel {
                         //p.setVisible(true);
                         changed |= p.setDisabledState(false);
                         p.setDisabledType(true); // Explicit filter
+                        
                     }
                     
                     if (p.isSelected() && p.isDisabled()) {
                         deselect.add(p);
                     }
                 }
-                
             }
             
         // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
@@ -95,7 +96,13 @@ public class FilterIndoorLevel {
         if (Main.isDisplayingMapView()) {
             Main.debug("Main.map.mapView.repaint();");
             Main.map.mapView.repaint();
+            // Main.map.mapView.requestFocus();
             //Main.map.filterDialog.updateDialogHeader();
+            
+            // Repaint doesn't work. Neither Layer.toggleVisible
+//            Layer l = PescePlugin.getLayer(ds); 
+//            l.toggleVisible();
+//            l.toggleVisible();
         }
     }
     

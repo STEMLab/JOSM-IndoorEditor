@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -89,18 +90,17 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     private static final int TREESTATES = 3;
 
     public static final String TREELABELALL = "All"; // TODO FloorsFilterDialog.TREELABELALL
+    public static final String GRAPHSLABEL = "Graphs"; // TODO FloorsFilterDialog.GRAPHSLABEL
 
     private FilterIndoorLevel filterLevel;
 
-    private FloorMutableTreeNode root = null;
-
-    private TreePath[] sp;
+    private TreePath[] sp; // selected paths
 
     /**
      * Constructs a new {@code FilterDialog}
      */
     public FloorsFilterDialog() {
-        super(tr("Floors selector"), "floors", tr("Select the floor to view"), null, 162);
+        super(tr("Indoor features"), "floors", tr("Fiter levels and graphs. Communication to the i-locate server."), null, 162);
         sp = new TreePath[2];
         sp[0] = null;
         sp[1] = null;
@@ -128,7 +128,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         return null==o;
     }
 
-    public void removeNodes(FloorMutableTreeNode root) {
+    public void removeNodes(DefaultMutableTreeNode root) {
 
         Main.debug("removeNodes()");
        root.removeAllChildren();
@@ -202,7 +202,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                     // Insert only nodes
                     continue;
                 }
-                Main.debug("I'm happy!!! A node "+primitive.getName());
                 int primitiveLevel = primitive.getKeys().containsKey(FilterIndoorLevel.LEVEL) ? Integer.parseInt(primitive.get(FilterIndoorLevel.LEVEL)) : Constants.MISSEDLEVEL;
                 
                 FloorMutableTreeNode floor = floors.get(primitiveLevel);
@@ -247,8 +246,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     }
     
     private JTree tree = null; // Very final
+    JTree treeGraphs = null;
 
-    protected void build() {
+    private void build() {
 
         Main.debug("build()");
         
@@ -257,9 +257,271 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             Main.debug("Init tree");
             tree = new JTree(root = new FloorMutableTreeNode("Floors"));
             
-            JScrollPane scrollable = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-          
-            add(scrollable, BorderLayout.CENTER);
+            ///////////////////////////////////////
+
+            tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+                @Override
+                public void valueChanged(TreeSelectionEvent e) {
+                    
+                    if(2 == tree.getSelectionCount()) {
+                        // I sected 2 objects, do nothing
+                        return;
+                    }
+                    
+                    filterLevel.updateDataset(); // I don't know when this is needed
+                    //selectedLabel.setText(e.getPath().toString());
+                    TreePath p = e.getPath();
+
+                    //Main.debug("@"+tree.getRowForPath(p));
+                    if(p.getPathCount() == TREESTATES) {
+                        // A node is selected
+
+                        Main.debug("[valueChanged] Node: " + ((NodeUserObject) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
+                    } else {
+                        Main.debug("[valueChanged] Not Node: " + ((String) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
+                    }
+
+                    DefaultMutableTreeNode floorNode = (DefaultMutableTreeNode) p.getPath()[TREEFLOOR - 1];
+
+                    String floorLabel = (String) floorNode.getUserObject();
+
+                    Main.debug(floorLabel);
+
+                    int level;
+                    if (FloorsFilterDialog.TREELABELALL.equals(floorLabel)) {
+                        // Do not filter levels
+                        level = Constants.ALLLEVELS;
+                    } else {
+                        level = Integer.parseInt(floorLabel);
+                    }
+                    filterLevel.show(level);
+
+                    if (p.getPathCount() > TREEFLOOR) {
+                        // TODO: The level 3 () is selected: the state
+                        Main.debug("You are clicking states, we'll work on selection here");
+                        
+                        // I can work on selection here.
+                        // Policy: keep selected 2 states clicked.
+                        //         If 2 states is yet seceted, start from 
+                        //         the begin and select only the clicked state.
+                        //         click a floor cancel states selection
+                        if(null == sp[0] || null != sp[0] && null != sp[1]) {
+                            sp[0] = p;
+                            sp[1] = null;
+                        } else if(null == sp[1]) {
+                            sp[1] = p;
+                            tree.setSelectionPaths(sp);
+                        } else {
+                            Main.error("[FloorsFilterDialog.build.addTreeSelectionListener] Bug!");
+                        }
+                    } else {
+                        sp[0] = null;
+                        sp[1] = null;
+                    }
+                }
+            });
+
+         SideButton uploadButton = new SideButton(new AbstractAction() {
+             {
+                 putValue(NAME, tr("Upload"));
+                 putValue(SHORT_DESCRIPTION,  tr("Upload all layers to {0}","i-locate"));
+                 putValue(SMALL_ICON, ImageProvider.get("dialogs","up"));
+             }
+             @Override
+             public void actionPerformed(ActionEvent e) {
+                 Main.debug("Upload all datasets!");
+                 
+                 for(UploadInfo info : PescePlugin.getUploadInfo()) {
+                     Main.debug("[FloorsFilterDialog.uploadButton.actionPerformed] "+info.layerName+" "+info.dataSet.toString());
+                     IlocateUploadTask task = new IlocateUploadTask(info.layerName, NullProgressMonitor.INSTANCE, false);
+                     
+                     
+                     Main.worker.submit(task);
+                 }
+                 
+                 //filterLevel.show(Constants.PREVIOUSLEVEL);
+                 
+                 if (Main.isDisplayingMapView()) {
+                     Main.map.mapView.repaint();
+                    /// Main.map.filterDialog.updateDialogHeader();
+                 }
+             }});
+         
+         SideButton linkButton = new SideButton(new AbstractAction() {
+             {
+                 putValue(NAME, tr("Link"));
+                 putValue(SHORT_DESCRIPTION,  tr("Select 2 states and link them"));
+                 putValue(SMALL_ICON, ImageProvider.get("dialogs","linknodes"));
+             }
+             @Override
+             public void actionPerformed(ActionEvent e) {
+                 Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] Create a link");
+
+                 // TODO: take the 2 selected nodes and create a link 
+                 TreePath[] paths = tree.getSelectionPaths();
+                 if(2 == tree.getSelectionCount() && paths[0].getPathCount() == TREESTATES && paths[1].getPathCount() == TREESTATES) {
+                     // GOOD
+                     NodeUserObject treeNode1 =  (NodeUserObject) ((FloorMutableTreeNode) paths[0].getLastPathComponent()).getUserObject();
+                     NodeUserObject treeNode2 =  (NodeUserObject) ((FloorMutableTreeNode) paths[1].getLastPathComponent()).getUserObject();
+
+                     // TODO: link them
+                     
+                     Main.debug(treeNode1+","+treeNode2);
+                     
+                     DataSet ds = Main.main.getCurrentDataSet();
+                     
+                     Node node1 = (Node) ds.getPrimitiveById(treeNode1.id);
+                     Node node2 = (Node) ds.getPrimitiveById(treeNode2.id);
+
+                     Relation relation1 = null, relation2 = null;
+                     // Problem:
+                     // The link between A and B has to be unique
+                     // And belong to the same graph
+                     Set<Long> node1Ways = new HashSet<>(), node2Ways = new HashSet<>();
+                     for(OsmPrimitive ref : node1.getReferrers()) {
+                         if(ref instanceof Way) {
+                             node1Ways.add(ref.getUniqueId());
+                         } else if(ref instanceof Relation) {
+                             // This has to be unique
+                             if(null != relation1) {
+                                 Main.warn("[...linkButton.actionPerformed] The node belongs to more than one relation.");
+                             }
+                             relation1 = (Relation) ref;
+                         }
+                     }
+                     for(OsmPrimitive ref : node2.getReferrers()) {
+                         if(ref instanceof Way) {
+                             node2Ways.add(ref.getUniqueId());
+                         } else if(ref instanceof Relation) {
+                             // This has to be unique
+                             if(null != relation2) {
+                                 Main.warn("[...linkButton.actionPerformed] The node belongs to more than one relation.");
+                             }
+                             relation2 = (Relation) ref;
+                         }
+                     }
+                     
+                     // Check the format
+                     if(null==relation1 || null==relation2) {
+                         Main.warn("[...linkButton.actionPerformed] node1 or node2 doesn't have a Graph");
+                         // TODO: create a message for the user: node1 or node2 doesn't have a Graph
+                         return;
+                     }
+                     if(relation1 != relation2) {
+                         Main.warn("[...linkButton.actionPerformed] relation1 and relation2 are different. Wrong data format");
+                         // TODO: create a message for the user: relation1 and relation2 are different. Wrong data format
+                         return;
+                     }
+                     
+                     if (Collections.disjoint(node1Ways, node2Ways)) {
+                     
+                         Way link = new Way();
+        
+                         link.addNode(node1);
+                         link.addNode(node2);
+        
+                         // IL -> InterLayer 
+                         // Lexically order the names
+                         link.put("name","IL"+(node1.getName().compareTo(node2.getName()) < 0 ? node1.getName()+node2.getName() : node2.getName()+node1.getName()));
+                         
+
+//                         Main.debug("ZZZ "+ds.getRelations().contains(relation1));
+//                         Main.debug("ZZZ "+ds.getNodes().contains(node1));
+//                         Main.debug("ZZZ "+ds.getNodes().contains(node2));
+//                         Main.debug("ZZZ "+ds.getWays().contains(link));
+                         
+                         ds.addPrimitive(link);
+                         
+//                         Main.debug("ZZZ "+ds.getWays().contains(link));
+//
+//                         Main.debug("XXX "+ds.isSelected(relation1));
+//                         Main.debug("XXX "+ds.isSelected(node1));
+//                         Main.debug("XXX "+ds.isSelected(node2));
+                         
+
+                         // Add link to relation1/2
+                         relation1.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, link));
+                         
+                     } else {
+                         // TODO: create a message for the user: this link exists yet.
+                         Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] This link exists yet");
+                     }
+                     
+                 } else {
+                     // TODO error message
+                     Main.debug("Quality or quantity of selectec features aren't suitable to create a link. Number: "+tree.getSelectionCount());
+                 }
+                 
+                 //filterLevel.show(Constants.PREVIOUSLEVEL);
+                 
+                 if (Main.isDisplayingMapView()) {
+                     Main.map.mapView.repaint();
+                 }
+             }});
+         
+         //uploadButton.setPreferredSize(new Dimension(200, 100));
+         
+//         SideButton downButton = new SideButton(new AbstractAction() {
+//             {
+//                 //putValue(NAME, tr("Down"));
+//                 //putValue(SHORT_DESCRIPTION, tr("Move filter down."));
+//                 putValue(SMALL_ICON, ImageProvider.get("dialogs", "pin"));
+//             }
+//             @Override
+//             public void actionPerformed(ActionEvent e) {
+//                 Main.debug("PRESS down");
+//             }
+//         });
+    //
+//         downButton.setPreferredSize(new Dimension(100, 100));
+            //this.add(new JLabel("Container doesn't use BorderLayout!"),BorderLayout.PAGE_START);
+            //this.add(downButton,BorderLayout.CENTER);
+         
+             JScrollPane scrollableFloors = new JScrollPane(tree, 
+                     JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
+                     JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+             JScrollPane scrollableGraphs = new JScrollPane(treeGraphs = new JTree(new DefaultMutableTreeNode(GRAPHSLABEL)), 
+                     JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
+                     JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+             
+             
+             JPanel treesPanel = new JPanel(Main.pref.getBoolean("dialog.align.left", false)
+                     ? new FlowLayout(FlowLayout.LEFT) : new GridLayout(1, 2));
+             treesPanel.add(scrollableFloors);
+             treesPanel.add(scrollableGraphs);
+             
+             add(treesPanel, BorderLayout.CENTER);
+             
+             final JPanel buttonRowPanel = new JPanel(Main.pref.getBoolean("dialog.align.left", false)
+                     ? new FlowLayout(FlowLayout.LEFT) : new GridLayout(1, 2));
+
+             buttonRowPanel.add(uploadButton);
+             buttonRowPanel.add(linkButton);
+             
+             this.add(buttonRowPanel,BorderLayout.SOUTH);
+
+        
+             
+             treeGraphs.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+
+                @Override
+                public void valueChanged(TreeSelectionEvent e) {
+                    // TODO Auto-generated method stub
+                    Main.debug("[...treeGraphs.addTreeSelectionListener] Graphs selection");
+                }
+                 
+             });
+             
+                          
+//             this.add(uploadButton,BorderLayout.PAGE_END);
+//             this.add(linkButton,BorderLayout.PAGE_END);  
+//             
+//             createLayout(this, true, Arrays.asList(new SideButton[] {
+//                     uploadButton, linkButton
+//             }));
+             
+            ///////////////////////////////////////
+            
         } else {
             Main.debug("get tree");
             root = (FloorMutableTreeNode) tree.getModel().getRoot();
@@ -294,202 +556,37 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
         root.sortChildren();
 
-        @SuppressWarnings("unchecked")
-        Enumeration<FloorMutableTreeNode> e = root.children();
-        while (e.hasMoreElements()) {
-            tree.makeVisible(new TreePath(e.nextElement().getPath()));
-        }
+        //public void expandPath(TreePath path)
+        tree.expandPath(new TreePath(root.getPath()));
+//        @SuppressWarnings("unchecked")
+//        Enumeration<FloorMutableTreeNode> e = root.children();
+//        while (e.hasMoreElements()) {
+//            tree.makeVisible(new TreePath(e.nextElement().getPath()));
+//        }
 
-        tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-            @Override
-            public void valueChanged(TreeSelectionEvent e) {
-                
-                if(2 == tree.getSelectionCount()) {
-                    // I sected 2 objects, do nothing
-                    return;
-                }
-                
-                filterLevel.updateDataset(); // I don't know when this is needed
-                //selectedLabel.setText(e.getPath().toString());
-                TreePath p = e.getPath();
-
-                //Main.debug("@"+tree.getRowForPath(p));
-                if(p.getPathCount() == TREESTATES) {
-                    // A node is selected
-
-                    Main.debug("[valueChanged] Node: " + ((NodeUserObject) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
-                } else {
-                    Main.debug("[valueChanged] Not Node: " + ((String) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
-                }
-
-                DefaultMutableTreeNode floorNode = (DefaultMutableTreeNode) p.getPath()[TREEFLOOR - 1];
-
-                String floorLabel = (String) floorNode.getUserObject();
-
-                Main.debug(floorLabel);
-
-                int level;
-                if (FloorsFilterDialog.TREELABELALL.equals(floorLabel)) {
-                    // Do not filter levels
-                    level = Constants.ALLLEVELS;
-                } else {
-                    level = Integer.parseInt(floorLabel);
-                }
-                filterLevel.show(level);
-
-                if (p.getPathCount() > TREEFLOOR) {
-                    // TODO: The level 3 () is selected: the state
-                    Main.debug("You are clicking states, we'll work on selection here");
-                    
-                    // I can work on selection here.
-                    // Policy: keep selected 2 states clicked.
-                    //         If 2 states is yet seceted, start from 
-                    //         the begin and select only the clicked state.
-                    //         click a floor cancel states selection
-                    if(null == sp[0] || null != sp[0] && null != sp[1]) {
-                        sp[0] = p;
-                        sp[1] = null;
-                    } else if(null == sp[1]) {
-                        sp[1] = p;
-                        tree.setSelectionPaths(sp);
-                    } else {
-                        Main.error("[FloorsFilterDialog.build.addTreeSelectionListener] Bug!");
-                    }
-                } else {
-                    sp[0] = null;
-                    sp[1] = null;
-                }
+        DataSet ds = Main.main.getCurrentDataSet();
+        if(null != ds) {
+            Main.debug(String.format("[FloorsFilterDialog.build] Add %d relations to the Graphs tree", ds.getRelations().size()));
+            DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGraphs.getModel().getRoot();
+            removeNodes(rootGraphs);
+            for(Relation relation : ds.getRelations()) {
+                rootGraphs.add(new DefaultMutableTreeNode(new NodeUserObject(relation.getPrimitiveId(), relation.getName())));
             }
-        });
+            
+            //YYY ((DefaultMutableTreeNode)rootGraphs.children().nextElement()).
 
-     SideButton uploadButton = new SideButton(new AbstractAction() {
-         {
-             putValue(NAME, tr("Upload"));
-             putValue(SHORT_DESCRIPTION,  tr("Upload all layers to {0}","i-locate"));
-             putValue(SMALL_ICON, ImageProvider.get("dialogs","up"));
-         }
-         @Override
-         public void actionPerformed(ActionEvent e) {
-             Main.debug("Upload all datasets!");
-             
-             for(UploadInfo info : PescePlugin.getUploadInfo()) {
-                 Main.debug("[FloorsFilterDialog.uploadButton.actionPerformed] "+info.layerName+" "+info.dataSet.toString());
-                 IlocateUploadTask task = new IlocateUploadTask(info.layerName, NullProgressMonitor.INSTANCE, false);
-                 
-                 
-                 Main.worker.submit(task);
-             }
-             
-             //filterLevel.show(Constants.PREVIOUSLEVEL);
-             
-             if (Main.isDisplayingMapView()) {
-                 Main.map.mapView.repaint();
-                /// Main.map.filterDialog.updateDialogHeader();
-             }
-         }});
-     
-     SideButton linkButton = new SideButton(new AbstractAction() {
-         {
-             putValue(NAME, tr("Link"));
-             putValue(SHORT_DESCRIPTION,  tr("Select 2 states and link them"));
-             putValue(SMALL_ICON, ImageProvider.get("dialogs","linknodes"));
-         }
-         @Override
-         public void actionPerformed(ActionEvent e) {
-             Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] Create a link");
-
-             // TODO: take the 2 selected nodes and create a link 
-             Main.debug("Selected count: "+tree.getSelectionCount());
-             TreePath[] paths = tree.getSelectionPaths();
-             if(2 == tree.getSelectionCount() && paths[0].getPathCount() == TREESTATES && paths[1].getPathCount() == TREESTATES) {
-                 // GOOD
-                 NodeUserObject treeNode1 =  (NodeUserObject) ((FloorMutableTreeNode) paths[0].getLastPathComponent()).getUserObject();
-                 NodeUserObject treeNode2 =  (NodeUserObject) ((FloorMutableTreeNode) paths[1].getLastPathComponent()).getUserObject();
-
-                 // TODO: link them
-                 
-                 Main.debug(treeNode1+","+treeNode2);
-                 
-                 DataSet ds = Main.main.getCurrentDataSet();
-                 
-                 Node node1 = (Node) ds.getPrimitiveById(treeNode1.id);
-                 Node node2 = (Node) ds.getPrimitiveById(treeNode2.id);
-
-                 // Problem:
-                 // The link between A and B has to be unique
-                 Set<Long> node1Ways = new HashSet<>(), node2Ways = new HashSet<>();
-                 for(OsmPrimitive ref : node1.getReferrers()) {
-                     if(ref instanceof Way) {
-                         node1Ways.add(ref.getUniqueId());
-                     }
-                 }
-                 for(OsmPrimitive ref : node2.getReferrers()) {
-                     if(ref instanceof Way) {
-                         node2Ways.add(ref.getUniqueId());
-                     }
-                 }
-                 
-                 if (Collections.disjoint(node1Ways, node2Ways)) {
-                 
-                     Way link = new Way();
-    
-                     link.addNode(node1);
-                     link.addNode(node2);
-    
-                     link.put("name","IL"+node1.getName()+node2.getName());
-                     
-                     ds.addPrimitive(link);
-                 } else {
-                     // TODO: create a message for the user: this link exists yet.
-                     Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] This link exists yet");
-                 }
-                 
-             } else {
-                 // BAD
-                 // TODO error message
-             }
-             
-             //filterLevel.show(Constants.PREVIOUSLEVEL);
-             
-             if (Main.isDisplayingMapView()) {
-                 Main.map.mapView.repaint();
-                /// Main.map.filterDialog.updateDialogHeader();
-             }
-         }});
-     
-     //uploadButton.setPreferredSize(new Dimension(200, 100));
-     
-//     SideButton downButton = new SideButton(new AbstractAction() {
-//         {
-//             //putValue(NAME, tr("Down"));
-//             //putValue(SHORT_DESCRIPTION, tr("Move filter down."));
-//             putValue(SMALL_ICON, ImageProvider.get("dialogs", "pin"));
-//         }
-//         @Override
-//         public void actionPerformed(ActionEvent e) {
-//             Main.debug("PRESS down");
-//         }
-//     });
-//
-//     downButton.setPreferredSize(new Dimension(100, 100));
-        //this.add(new JLabel("Container doesn't use BorderLayout!"),BorderLayout.PAGE_START);
-        //this.add(downButton,BorderLayout.CENTER);
+            treeGraphs.expandPath(new TreePath(rootGraphs.getPath()));
+            
+//            // Make them visible, it is needed only if I hide the root
+//            @SuppressWarnings("unchecked")
+//            Enumeration<DefaultMutableTreeNode> e1 = rootGraphs.children();
+//            while (e.hasMoreElements()) {
+//                treeGraphs.makeVisible(new TreePath(e1.nextElement().getPath()));
+//            }
+        } else {
+            Main.debug("[FloorsFilterDialog.build] DataSet not defined yet");
+        }
         
-         final JPanel buttonRowPanel = new JPanel(Main.pref.getBoolean("dialog.align.left", false)
-                 ? new FlowLayout(FlowLayout.LEFT) : new GridLayout(1, 2));
-
-         buttonRowPanel.add(uploadButton);
-         buttonRowPanel.add(linkButton);
-         
-         this.add(buttonRowPanel,BorderLayout.SOUTH);
-         
-//         this.add(uploadButton,BorderLayout.PAGE_END);
-//         this.add(linkButton,BorderLayout.PAGE_END);  
-//         
-//         createLayout(this, true, Arrays.asList(new SideButton[] {
-//                 uploadButton, linkButton
-//         }));
-         
     }
 
     @Override
@@ -634,5 +731,4 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             this.label = label;
         }
     }
-    
 }
