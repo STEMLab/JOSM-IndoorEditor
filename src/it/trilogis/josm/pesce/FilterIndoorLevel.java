@@ -1,7 +1,9 @@
 package it.trilogis.josm.pesce;
 
 import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -20,6 +22,7 @@ public class FilterIndoorLevel {
     public final static String LEVEL = "indoor:level"; // TODO: move to...
     
     private int currentLevel = Constants.ALLLEVELS;
+    private Relation currentGraph;
     
     public FilterIndoorLevel() {
         updateDataset();
@@ -30,16 +33,56 @@ public class FilterIndoorLevel {
         ds = Main.main.getCurrentDataSet();
     }
     
-    public void showAll() {
-        show(Constants.ALLLEVELS);
+    private static class IsMember {
+        private Set<OsmPrimitive> primitives;
+        public IsMember(Relation graph) {
+            if(null!=graph) {
+                this.primitives = graph.getMemberPrimitives();
+            }
+        }
+        
+        boolean isMember(OsmPrimitive primitive) {
+            return primitives.contains(primitive);
+        }
     }
-    public void show(int showLevel) {
+    private static class AlwaysMember extends IsMember {
+        
+        public AlwaysMember() {
+            super(null);
+        }
+        @Override
+        boolean isMember(OsmPrimitive primitive) {
+            return true;
+        }
+    }
+    
+    
+    
+    public void show(int level, Relation graph, boolean allGraphs) {
         boolean changed = false;
         Collection<OsmPrimitive> deselect = new HashSet<>();
-        Main.debug("Filter on level="+showLevel);
+        Main.debug("Filter on level="+level);
         
-        if(Constants.PREVIOUSLEVEL == showLevel) {
-            showLevel = currentLevel;
+        if(Constants.PREVIOUSLEVEL == level) {
+            level = currentLevel;
+            Main.debug("PREVIOUSLEVEL, so: level="+level);
+        }
+        
+        boolean showPreviousGraph = null == graph && !allGraphs;
+        
+        IsMember isInGraph;
+        if(allGraphs) {
+            isInGraph = new AlwaysMember();
+        } else if(showPreviousGraph) {
+            isInGraph = new IsMember(currentGraph);
+        } else {
+            isInGraph = new IsMember(graph);
+        }
+        
+        
+        // Save graph for next call
+        if(null != graph) {
+            currentGraph = graph;
         }
         
         updateDataset();
@@ -55,7 +98,7 @@ public class FilterIndoorLevel {
                 if(p.getKeys().containsKey(LEVEL) || null != wayLevel) {
                     int primitiveLevel = p.getKeys().containsKey(LEVEL) ? Integer.parseInt(p.get(LEVEL)) : wayLevel;
                     Main.debug("Modify this. Now="+primitiveLevel);
-                    if(primitiveLevel == showLevel || Constants.ALLLEVELS == showLevel) {
+                    if((primitiveLevel == level || Constants.ALLLEVELS == level) && isInGraph.isMember(p)) {
                         // show
                         Main.debug("show");
                         //if(p.isDisabled()) changed = true; // FIXME
@@ -78,7 +121,8 @@ public class FilterIndoorLevel {
                 }
             }
             
-        // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
+            // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
+            ds.clearSelection(deselect);
         } 
         //finally 
         {
@@ -88,8 +132,22 @@ public class FilterIndoorLevel {
             
             if(!deselect.isEmpty()) ds.clearSelection(deselect);
             
-            currentLevel = showLevel;
+            currentLevel = level;
         }
+    }
+    
+    public void show(Relation graph, boolean allGraphs) {
+        show(Constants.PREVIOUSLEVEL, graph, allGraphs);
+    }
+    
+    public void show(int level) {
+        show(level, null, false); // null, false -> previousGraph 
+    }
+    public void showAllGraphs() {
+        show(Constants.PREVIOUSLEVEL, null, true);
+    }
+    public void showAllLevels() {
+        show(Constants.ALLLEVELS, null, false);
     }
     
     private void repaint() {

@@ -214,7 +214,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 
 
                 PrimitiveId osmId = primitive.getPrimitiveId();
-                NodeUserObject nodeUserObj = new NodeUserObject(osmId, primitive.getName());
+                PrimitiveUserObject nodeUserObj = new PrimitiveUserObject(osmId, primitive.getName());
                 
                 floor.add(new FloorMutableTreeNode(nodeUserObj, false));
             }
@@ -276,7 +276,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                     if(p.getPathCount() == TREESTATES) {
                         // A node is selected
 
-                        Main.debug("[valueChanged] Node: " + ((NodeUserObject) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
+                        Main.debug("[valueChanged] Node: " + ((PrimitiveUserObject) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
                     } else {
                         Main.debug("[valueChanged] Not Node: " + ((String) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
                     }
@@ -361,8 +361,8 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                  TreePath[] paths = tree.getSelectionPaths();
                  if(2 == tree.getSelectionCount() && paths[0].getPathCount() == TREESTATES && paths[1].getPathCount() == TREESTATES) {
                      // GOOD
-                     NodeUserObject treeNode1 =  (NodeUserObject) ((FloorMutableTreeNode) paths[0].getLastPathComponent()).getUserObject();
-                     NodeUserObject treeNode2 =  (NodeUserObject) ((FloorMutableTreeNode) paths[1].getLastPathComponent()).getUserObject();
+                     PrimitiveUserObject treeNode1 =  (PrimitiveUserObject) ((FloorMutableTreeNode) paths[0].getLastPathComponent()).getUserObject();
+                     PrimitiveUserObject treeNode2 =  (PrimitiveUserObject) ((FloorMutableTreeNode) paths[1].getLastPathComponent()).getUserObject();
 
                      // TODO: link them
                      
@@ -506,8 +506,22 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
                 @Override
                 public void valueChanged(TreeSelectionEvent e) {
-                    // TODO Auto-generated method stub
-                    Main.debug("[...treeGraphs.addTreeSelectionListener] Graphs selection");
+                    // TODO Restrict the visibility of:
+                    // 0. Hide the objects on the map (real hiding);
+                    // 1. Don't show the 
+                    Main.debug("[FloorsFilterDialog.treeGraphs.addTreeSelectionListener] Graphs selection");
+                    DataSet ds = Main.main.getCurrentDataSet();
+                    
+                    TreePath p = e.getPath();
+                    if(p.getPathCount() == 2) {
+                        // A graph is selected
+                        PrimitiveUserObject primitiveNode = (PrimitiveUserObject) ((DefaultMutableTreeNode) p.getLastPathComponent()).getUserObject();
+                        
+                        filterLevel.show((Relation) ds.getPrimitiveById(primitiveNode.id), false);
+                    } else {
+                        // Show all graphs
+                        filterLevel.showAllGraphs();
+                    }
                 }
                  
              });
@@ -570,7 +584,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGraphs.getModel().getRoot();
             removeNodes(rootGraphs);
             for(Relation relation : ds.getRelations()) {
-                rootGraphs.add(new DefaultMutableTreeNode(new NodeUserObject(relation.getPrimitiveId(), relation.getName())));
+                rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(relation.getPrimitiveId(), relation.getName())));
             }
             
             //YYY ((DefaultMutableTreeNode)rootGraphs.children().nextElement()).
@@ -717,7 +731,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         }
     }
 
-    static private class NodeUserObject {
+    static private class PrimitiveUserObject {
         public String label;
         public PrimitiveId id;
         
@@ -726,7 +740,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             return label;
         }
         
-        public NodeUserObject(PrimitiveId id, String label) {
+        public PrimitiveUserObject(PrimitiveId id, String label) {
             this.id = id;
             this.label = label;
         }
