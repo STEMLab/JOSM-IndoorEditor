@@ -91,6 +91,7 @@ public class FilterIndoorLevel {
                 if(p.getKeys().containsKey(LEVEL) || null != wayLevel) {
                     int primitiveLevel = p.getKeys().containsKey(LEVEL) ? Integer.parseInt(p.get(LEVEL)) : wayLevel;
                     //Main.debug("Modify this. Now="+primitiveLevel);
+
                     if((primitiveLevel == level || Constants.ALLLEVELS == level) && isInGraph.isMember(p)) {
                         // show
                         //Main.debug("show");
@@ -103,9 +104,8 @@ public class FilterIndoorLevel {
                         //if(!p.isDisabled()) changed = true; // FIXME
                         //p.setDisabledState(true);
                         //p.setVisible(true);
-                        changed |= p.setDisabledState(false);
+                        changed |= p.setDisabledState(!isInGraph.isMember(p)); // hide the other graphs
                         p.setDisabledType(true); // Explicit filter
-                        
                     }
                     
                     if (p.isSelected() && p.isDisabled()) {
