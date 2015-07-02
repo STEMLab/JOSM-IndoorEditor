@@ -22,11 +22,11 @@ public class FilterIndoorLevel {
     public final static String LEVEL = "indoor:level"; // TODO: move to...
     
     private int currentLevel = Constants.ALLLEVELS;
-    private Relation currentGraph;
+    private IsMember isInGraph;
     
     public FilterIndoorLevel() {
         updateDataset();
-        
+        isInGraph = new AlwaysMember();
     }
     
     public void updateDataset() {
@@ -70,43 +70,36 @@ public class FilterIndoorLevel {
         
         boolean showPreviousGraph = null == graph && !allGraphs;
         
-        IsMember isInGraph;
+        Main.debug("[...show] level="+(level==Constants.ALLLEVELS ? "All" : level)+" showPreviousGraph="+showPreviousGraph+" allGraphs="+allGraphs);
+        
         if(allGraphs) {
             isInGraph = new AlwaysMember();
-        } else if(showPreviousGraph) {
-            isInGraph = new IsMember(currentGraph);
-        } else {
+        } else if(!showPreviousGraph) {
             isInGraph = new IsMember(graph);
         }
-        
-        
-        // Save graph for next call
-        if(null != graph) {
-            currentGraph = graph;
-        }
-        
+      
         updateDataset();
         //try
         {
             ds.beginUpdate();
             final Collection<OsmPrimitive> all = ds.allNonDeletedCompletePrimitives();
             for (OsmPrimitive p : all) {
-                Main.debug(p instanceof Relation ? "Relation" : p instanceof Way ? "Way" : p instanceof Node ? "Node" : "Error");
+                //Main.debug(p instanceof Relation ? "Relation" : p instanceof Way ? "Way" : p instanceof Node ? "Node" : "Error");
                 
                 Integer wayLevel = p instanceof Way ? getLevel((Way)p) : null;
                 
                 if(p.getKeys().containsKey(LEVEL) || null != wayLevel) {
                     int primitiveLevel = p.getKeys().containsKey(LEVEL) ? Integer.parseInt(p.get(LEVEL)) : wayLevel;
-                    Main.debug("Modify this. Now="+primitiveLevel);
+                    //Main.debug("Modify this. Now="+primitiveLevel);
                     if((primitiveLevel == level || Constants.ALLLEVELS == level) && isInGraph.isMember(p)) {
                         // show
-                        Main.debug("show");
+                        //Main.debug("show");
                         //if(p.isDisabled()) changed = true; // FIXME
                         //p.setDisabledState(false);
                         changed |= p.unsetDisabledState();
                     } else {
                         // disable
-                        Main.debug("disable");
+                        //Main.debug("disable");
                         //if(!p.isDisabled()) changed = true; // FIXME
                         //p.setDisabledState(true);
                         //p.setVisible(true);
