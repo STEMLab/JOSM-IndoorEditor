@@ -6,6 +6,9 @@ import it.trilogis.josm.pesce.PescePlugin;
 import it.trilogis.josm.pesce.PescePlugin.LayerType;
 import it.trilogis.josm.pesce.PescePlugin.UploadInfo;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -13,6 +16,10 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.bind.JAXBException;
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLStreamException;
 
 import net.opengis.indoorgml.v_1_0.core.IndoorFeaturesType;
 
@@ -38,6 +45,21 @@ import org.openstreetmap.josm.io.GpxImporter.GpxImporterData;
 import org.openstreetmap.josm.io.OsmServerLocationReader;
 import org.openstreetmap.josm.io.OsmServerReader;
 import org.openstreetmap.josm.io.OsmTransferException;
+import org.openstreetmap.josm.plugins.opendata.OdPlugin;
+import org.openstreetmap.josm.plugins.opendata.core.OdConstants;
+import org.openstreetmap.josm.plugins.opendata.core.datasets.AbstractDataSetHandler;
+import org.openstreetmap.josm.plugins.opendata.core.datasets.SimpleDataSetHandler;
+import org.openstreetmap.josm.plugins.opendata.core.io.NeptuneReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.archive.ZipReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.geographic.GmlReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.geographic.KmlReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.geographic.KmzReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.geographic.MifReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.geographic.ShpReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.geographic.TabReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.tabular.CsvReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.tabular.OdsReader;
+import org.openstreetmap.josm.plugins.opendata.core.io.tabular.XlsReader;
 import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.xml.sax.SAXException;
 
@@ -113,8 +135,18 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
                  return;
              ProgressMonitor subMonitor = progressMonitor.createSubTaskMonitor(ProgressMonitor.ALL_TICKS, false);
              InputStream in = new URL(url).openStream();
-             dataSet = importer.parseDataSet(in, subMonitor);
-             type = LayerType.IGML;
+             
+             if(false /*IndoorGML*/) {
+                 dataSet = importer.parseDataSet(in, subMonitor);
+                 type = LayerType.IGML;
+             } else if(true /*ZippedSHP*/) {
+
+                 Main.debug("[DownloadIlocateTask.DownloadTask.realRun] Parsing shapefile");
+                 dataSet = ZippedShpReader.parseDataSet(in, null, subMonitor, true);
+                 
+             }
+             
+             
          } catch(Exception e) {
              if (isCanceled())
                  return;
@@ -205,5 +237,32 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
     public Future<?> download(boolean newLayer, Bounds downloadArea, ProgressMonitor progressMonitor) {
         // TODO Not implemented yet
         return null;
+    }
+    
+    private static class ZippedShpReader extends ZipReader {
+
+        public ZippedShpReader(InputStream in, AbstractDataSetHandler handler, boolean promptUser) {
+            super(in, handler, promptUser);
+        }
+        
+        
+        protected DataSet getDataForFile(File f, final ProgressMonitor progressMonitor)
+                throws FileNotFoundException, IOException, XMLStreamException, FactoryConfigurationError, JAXBException {
+            Main.debug("[DownloadIlocateTask.ZippedShpReader.getDataForFile] Calling MY getDataForFile");
+            if (f == null) {
+                return null;
+            } else if (!f.exists()) {
+                Main.warn("File does not exist: "+f.getPath());
+                return null;
+            } else {
+                Main.info("Parsing zipped shapefile "+f.getName());
+                FileInputStream in = new FileInputStream(f);
+                ProgressMonitor instance = null;
+                if (progressMonitor != null) {
+                    instance = progressMonitor.createSubTaskMonitor(ProgressMonitor.ALL_TICKS, false);
+                }
+                return ShpReader.parseDataSet(in, f, null, instance);
+            }
+        }
     }
 }

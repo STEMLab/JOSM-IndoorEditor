@@ -293,7 +293,7 @@ public class IGMLConverter {
             System.out.println("EdgesType id: "+type.getId());
             for(TransitionMemberType transitionMember : type.getTransitionMember()) {
                 TransitionType transition = transitionMember.getTransition();
-                String stateName = transition.getDescription().getTitle();
+                //String stateName = transition.getDescription().getTitle();
                 // I'm assuming a lot of wrong things
                 JAXBElement<? extends AbstractCurveType> curve = transition.getGeometry().getAbstractCurve();
                 // Not used yet curves, I assume direc lines between States

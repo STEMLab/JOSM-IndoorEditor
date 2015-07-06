@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/PortalRequestSample"/>
 	<classpathentry kind="lib" path="lib/indoorgml-v_1_0-schema-1.0.2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/indoorgml-v_1_0-schema-1.0.2.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/JOSM-OpenData"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

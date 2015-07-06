@@ -31,7 +31,7 @@ public class PescePlugin extends Plugin {
     private FloorsFilterDialog dialog;
     
     static private List<UploadInfo> uploadInfo = null;
-    
+    static PescePlugin instance = null;
     
     public PescePlugin() {
         super(null);
@@ -40,6 +40,12 @@ public class PescePlugin extends Plugin {
     public PescePlugin(final PluginInformation info) {
         super(info);
         //MainMenu.add(Main.main.menu.moreToolsMenu, new SimplifyAreaAction());
+        
+        if (instance == null) {
+            instance = this;
+        } else {
+            throw new IllegalAccessError("Cannot instantiate plugin twice !");
+        }
         
         FileImporter importer = new PesceImporter();
         FileExporter exporter = new PesceExporter();

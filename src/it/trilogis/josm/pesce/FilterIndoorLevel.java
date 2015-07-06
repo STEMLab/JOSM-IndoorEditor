@@ -94,16 +94,9 @@ public class FilterIndoorLevel {
 
                     if((primitiveLevel == level || Constants.ALLLEVELS == level) && isInGraph.isMember(p)) {
                         // show
-                        //Main.debug("show");
-                        //if(p.isDisabled()) changed = true; // FIXME
-                        //p.setDisabledState(false);
                         changed |= p.unsetDisabledState();
                     } else {
                         // disable
-                        //Main.debug("disable");
-                        //if(!p.isDisabled()) changed = true; // FIXME
-                        //p.setDisabledState(true);
-                        //p.setVisible(true);
                         changed |= p.setDisabledState(!isInGraph.isMember(p)); // hide the other graphs
                         p.setDisabledType(true); // Explicit filter
                     }
