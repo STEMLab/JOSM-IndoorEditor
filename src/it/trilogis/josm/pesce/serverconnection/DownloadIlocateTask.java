@@ -64,158 +64,171 @@ import org.openstreetmap.josm.tools.CheckParameterUtil;
 import org.xml.sax.SAXException;
 
 /**
-* Task allowing to download GPS data.
-*/
+ * Task allowing to download GPS data.
+ */
 public class DownloadIlocateTask extends AbstractDownloadTask {
 
- private DownloadTask downloadTask;
+    private DownloadTask downloadTask;
 
- private static final String PATTERN_ILOCATE_INDOORGML = "https?://.*/(.*\\.igml)";
- private static final String PATTERN_ILOCATE_GEOJSON = "https?://.*/(.*\\.geojson)";
+    private static final String PATTERN_ILOCATE_INDOORGML = "https?://.*/(.*\\.igml)";
+    private static final String PATTERN_ILOCATE_GEOJSON = "https?://.*/(.*\\.geojson)";
+    private static final String PATTERN_ILOCATE_SECTION = "https?://.*/service/section\\?sectionId=(.*)";
+    
+    private static final String[] PATTERNS = {
+        PATTERN_ILOCATE_INDOORGML,
+        PATTERN_ILOCATE_GEOJSON,
+        PATTERN_ILOCATE_SECTION,
+        };
 
- protected String newLayerName = null;
- protected DataSet downloadedData;
- 
- private PesceImporter importer;
+    protected String newLayerName = null;
+    protected DataSet downloadedData;
 
- public DownloadIlocateTask() {
-     importer = new PesceImporter();
-}
- 
- @Override
- public String[] getPatterns() {
-     return new String[] {PATTERN_ILOCATE_INDOORGML, PATTERN_ILOCATE_GEOJSON};
- }
+    private PesceImporter importer;
 
- @Override
- public String getTitle() {
-     return tr("Download IndoorGML");
- }
+    public DownloadIlocateTask() {
+        importer = new PesceImporter();
+    }
 
- @Override
- public Future<?> loadUrl(boolean newLayer, String url, ProgressMonitor progressMonitor) {
-     CheckParameterUtil.ensureParameterNotNull(url, "url");
-     if (url.matches(PATTERN_ILOCATE_INDOORGML)) {
-         Main.debug("[DownloadIlocateTask.loadUrl] IndoorGML loading");
-         downloadTask = new DownloadTask(newLayer,
-                 url, progressMonitor);
-         // Extract .gpx filename from URL to set the new layer name
-         Matcher matcher = Pattern.compile(PATTERN_ILOCATE_INDOORGML).matcher(url);
-         newLayerName = matcher.matches() ? matcher.group(1) : null;
-         // We need submit instead of execute so we can wait for it to finish and get the error
-         // message if necessary. If no one calls getErrorMessage() it just behaves like execute.
-         return Main.worker.submit(downloadTask);
+    @Override
+    public String[] getPatterns() {
+        return PATTERNS;
+    }
 
-     } else if(url.matches(PATTERN_ILOCATE_GEOJSON)) {
-         Main.debug("[DownloadIlocateTask.loadUrl] Geojson support not implemented yet!");
-     }
-     return null;
- }
+    @Override
+    public String getTitle() {
+        return tr("Download IndoorGML");
+    }
 
- @Override
- public void cancel() {
-     if (downloadTask != null) {
-         downloadTask.cancel();
-     }
- }
+    @Override
+    public Future<?> loadUrl(boolean newLayer, String url, ProgressMonitor progressMonitor) {
+        CheckParameterUtil.ensureParameterNotNull(url, "url");
+        
+        Main.debug("[DownloadIlocateTask.loadUrl] URL loading");
+        
+        downloadTask = new DownloadTask(newLayer, url, progressMonitor);
+        return Main.worker.submit(downloadTask);
+    }
 
- class DownloadTask extends AbstractInternalTask {
-     private String url;
-     private LayerType type;
+    @Override
+    public void cancel() {
+        if (downloadTask != null) {
+            downloadTask.cancel();
+        }
+    }
 
-     public DownloadTask(boolean newLayer, String url, ProgressMonitor progressMonitor) {
-         super(newLayer, tr("Downloading i-locate data"), progressMonitor, false);
-         this.url = url;
-     }
+    class DownloadTask extends AbstractInternalTask {
+        private String url;
+        private LayerType type;
 
-     @Override
-     public void realRun() throws IOException, SAXException, OsmTransferException {
-         try {
-             if (isCanceled())
-                 return;
-             ProgressMonitor subMonitor = progressMonitor.createSubTaskMonitor(ProgressMonitor.ALL_TICKS, false);
-             InputStream in = new URL(url).openStream();
-             
-             if(false /*IndoorGML*/) {
-                 dataSet = importer.parseDataSet(in, subMonitor);
-                 type = LayerType.IGML;
-             } else if(true /*ZippedSHP*/) {
+        public DownloadTask(boolean newLayer, String url, ProgressMonitor progressMonitor) {
+            super(newLayer, tr("Downloading i-locate data"), progressMonitor, false);
+            this.url = url;
+        }
 
-                 Main.debug("[DownloadIlocateTask.DownloadTask.realRun] Parsing shapefile");
-                 dataSet = ZippedShpReader.parseDataSet(in, null, subMonitor, true);
-                 
-             }
-             
-             
-         } catch(Exception e) {
-             if (isCanceled())
-                 return;
-             if (e instanceof OsmTransferException) {
-                 rememberException(e);
-             } else {
-                 rememberException(new OsmTransferException(e));
-             }
-         }
-     }
+        @Override
+        public void realRun() throws IOException, SAXException, OsmTransferException {
+            try {
+                if (isCanceled())
+                    return;
+                ProgressMonitor subMonitor = progressMonitor.createSubTaskMonitor(ProgressMonitor.ALL_TICKS, false);
+                InputStream in = new URL(url).openStream();
 
-     @Override
-     protected void finish() {
-         if (isFailed() || isCanceled())
-             return;
-         if (dataSet == null)
-             return; // user canceled download or error occurred
-         if (dataSet.allPrimitives().isEmpty()) {
-             rememberErrorMessage(tr("No data found in this area."));
-             // need to synthesize a download bounds lest the visual indication of downloaded
-             // area doesn't work
-             dataSet.dataSources.add(new DataSource(new Bounds(new LatLon(0, 0)), "i-locate server"));
-         }
-         saveUploadInfo();
-         downloadedData = dataSet;
-         loadData(newLayerName, null);
-     }
-     
-     private void saveUploadInfo() {
-         PescePlugin.addUploadInfo(newLayerName, dataSet, url, type);
-     }
+                if (url.matches(PATTERN_ILOCATE_INDOORGML)) {
+                    // Extract .gpx filename from URL to set the new layer name
+                    Matcher matcher = Pattern.compile(PATTERN_ILOCATE_INDOORGML).matcher(url);
+                    newLayerName = matcher.matches() ? matcher.group(1) : null;
+                    // We need submit instead of execute so we can wait for it to finish and get the error
+                    // message if necessary. If no one calls getErrorMessage() it just behaves like execute.
+                    
+                    dataSet = importer.parseDataSet(in, subMonitor);
+                    type = LayerType.IGML;
 
+                } else if (url.matches(PATTERN_ILOCATE_GEOJSON)) {
+                    Main.debug("[DownloadIlocateTask.DownloadTask.realRun] Geojson support not implemented yet!");
+                    setFailed(true);
+                } else if(url.matches(PATTERN_ILOCATE_SECTION /* ZippedSHP */)) {
+                    
+                    Main.debug("[DownloadIlocateTask.DownloadTask.realRun] Portal section url. Not implemented");
+                    Matcher matcher = Pattern.compile(PATTERN_ILOCATE_SECTION).matcher(url);
+                    String newLayerName = matcher.matches() ? tr("Section {0}",matcher.group(1)) : null;
+                    Main.debug("[DownloadIlocateTask.DownloadTask.realRun] Parsing shapefile " + (newLayerName == null ? "" : newLayerName));
+                                        
+                    dataSet = ZippedShpReader.parseDataSet(in, null, subMonitor, true);
+                    type = LayerType.BUILDING;
+                }
+            } catch (Exception e) {
+                if (isCanceled())
+                    return;
+                if (e instanceof OsmTransferException) {
+                    rememberException(e);
+                } else {
+                    rememberException(new OsmTransferException(e));
+                }
+            }
+        }
 
-     @Override protected void cancel() {
-         setCanceled(true);
-     }
+        @Override
+        protected void finish() {
+            if (isFailed() || isCanceled())
+                return;
+            if (dataSet == null)
+                return; // user canceled download or error occurred
+            if (dataSet.allPrimitives().isEmpty()) {
+                rememberErrorMessage(tr("No data found in this area."));
+                // need to synthesize a download bounds lest the visual indication of downloaded
+                // area doesn't work
+                dataSet.dataSources.add(new DataSource(new Bounds(new LatLon(0, 0)), "i-locate server"));
+            }
+            saveUploadInfo();
+            downloadedData = dataSet;
+            Main.debug("[DownloadIlocateTask.DownloadTask.finish] Load data, type: "+type.toString());
+            loadData(newLayerName, null);
+        }
 
-     private ProgressTaskId downloadIgmlTaskId = null;
-     @Override
-     public ProgressTaskId canRunInBackground() {
-         if(null == downloadIgmlTaskId) {
-             downloadIgmlTaskId =  new ProgressTaskId("core", "downloadIGML");
-         }
-         return downloadIgmlTaskId;
-     }
- }
+        private void saveUploadInfo() {
+            PescePlugin.addUploadInfo(newLayerName, dataSet, url, type);
+        }
 
- @Override
- public String getConfirmationMessage(URL url) {
-     // TODO
-     return null;
- }
+        @Override
+        protected void cancel() {
+            setCanceled(true);
+        }
 
- @Override
- public boolean isSafeForRemotecontrolRequests() {
-     return true;
- }
+        private ProgressTaskId downloadIgmlTaskId = null;
 
- /**
-  * Determines if the given URL denotes an OSM gpx-related API call.
-  * @param url The url to check
-  * @since 5745
-  */
- public static final boolean isFromServer(String url) {
-     return false;
- }
+        @Override
+        public ProgressTaskId canRunInBackground() {
+            if (null == downloadIgmlTaskId) {
+                downloadIgmlTaskId = new ProgressTaskId("core", "downloadIGML");
+            }
+            return downloadIgmlTaskId;
+        }
+    }
+
+    @Override
+    public String getConfirmationMessage(URL url) {
+        // TODO
+        return null;
+    }
+
+    @Override
+    public boolean isSafeForRemotecontrolRequests() {
+        return true;
+    }
+
+    /**
+     * Determines if the given URL denotes an OSM gpx-related API call.
+     * 
+     * @param url
+     *            The url to check
+     * @since 5745
+     */
+    public static final boolean isFromServer(String url) {
+        return false;
+    }
 
     public Future<?> downloadIndoorGML(boolean newLayer, String url, ProgressMonitor progressMonitor) {
-        
+
         //importer
 //        IndoorFeaturesType root;
 //        try {
@@ -227,35 +240,31 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
 //        }
 //
 //        downloadedData = IGMLConverter.convert(root);
-        
-        
+
         return Main.worker.submit(downloadTask);
         //return null;
     }
 
     @Override
     public Future<?> download(boolean newLayer, Bounds downloadArea, ProgressMonitor progressMonitor) {
-        // TODO Not implemented yet
         return null;
     }
-    
+
     private static class ZippedShpReader extends ZipReader {
 
         public ZippedShpReader(InputStream in, AbstractDataSetHandler handler, boolean promptUser) {
             super(in, handler, promptUser);
         }
-        
-        
-        protected DataSet getDataForFile(File f, final ProgressMonitor progressMonitor)
-                throws FileNotFoundException, IOException, XMLStreamException, FactoryConfigurationError, JAXBException {
+
+        protected DataSet getDataForFile(File f, final ProgressMonitor progressMonitor) throws FileNotFoundException, IOException, XMLStreamException, FactoryConfigurationError, JAXBException {
             Main.debug("[DownloadIlocateTask.ZippedShpReader.getDataForFile] Calling MY getDataForFile");
             if (f == null) {
                 return null;
             } else if (!f.exists()) {
-                Main.warn("File does not exist: "+f.getPath());
+                Main.warn("File does not exist: " + f.getPath());
                 return null;
             } else {
-                Main.info("Parsing zipped shapefile "+f.getName());
+                Main.info("Parsing zipped shapefile " + f.getName());
                 FileInputStream in = new FileInputStream(f);
                 ProgressMonitor instance = null;
                 if (progressMonitor != null) {

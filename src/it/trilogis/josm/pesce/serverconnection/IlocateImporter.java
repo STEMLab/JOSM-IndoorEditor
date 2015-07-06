@@ -37,6 +37,7 @@ public class IlocateImporter extends RequestHandler {
         try {
             if (suitableDownloadTasks != null && !suitableDownloadTasks.isEmpty()) {
                 // TODO: handle multiple suitable download tasks ?
+                Main.debug("[IlocateImporter.handleRequest] loadUrl()");
                 suitableDownloadTasks.iterator().next().loadUrl(isLoadInNewLayer(), url.toExternalForm(), null);
             }
         } catch (Exception ex) {

@@ -87,7 +87,7 @@ public class PescePlugin extends Plugin {
     // Save here information about downloaded layers
     public static enum LayerType {
         IGML,
-        GEOJSON
+        BUILDING
     }
     public static List<UploadInfo> getUploadInfo() {
         if(null == uploadInfo) {

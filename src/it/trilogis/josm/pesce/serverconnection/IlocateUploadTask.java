@@ -64,7 +64,7 @@ public class IlocateUploadTask extends PleaseWaitRunnable {
             String contentType = null;
             
             switch(info.type) {
-            case GEOJSON:
+            case BUILDING:
                 Main.debug("[IlocateUploadTask.realRun] Geojson not implemented");
                 contentType = "application/json";
                 break;
