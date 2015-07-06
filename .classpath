@@ -3,9 +3,20 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/JOSM"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/PortalRequestSample"/>
 	<classpathentry kind="lib" path="lib/indoorgml-v_1_0-schema-1.0.2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/indoorgml-v_1_0-schema-1.0.2.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/JOSM-OpenData"/>
+	<classpathentry kind="lib" path="lib/josm-custom.jar"/>
+	<classpathentry kind="lib" path="lib/gml-v_3_2_1-schema-1.1.0-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/gml-v_3_2_1-schema-1.1.0-sources.jar"/>
+	<classpathentry kind="lib" path="lib/gml-v_3_2_1-schema-1.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-annotations-2.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-core-2.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-databind-2.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb2-basics-runtime-0.9.3.jar"/>
+	<classpathentry kind="lib" path="lib/okhttp-2.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/okio-1.2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
