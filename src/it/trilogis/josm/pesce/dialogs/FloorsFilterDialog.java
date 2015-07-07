@@ -34,6 +34,7 @@ import java.util.Stack;
 import javax.swing.AbstractAction;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -43,10 +44,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import org.openstreetmap.josm.Main;
+import org.openstreetmap.josm.actions.UpdateDataAction;
 import org.openstreetmap.josm.actions.search.SearchAction;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Filter;
@@ -91,6 +94,13 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
     public static final String TREELABELALL = "All"; // TODO FloorsFilterDialog.TREELABELALL
     public static final String GRAPHSLABEL = "Graphs"; // TODO FloorsFilterDialog.GRAPHSLABEL
+    
+    public static FloorsFilterDialog INSTANCE = null;
+    
+    private JTree tree = null; // Very final
+    private JTree treeGraphs = null;
+   
+    //final static private Set<String> specialFloors = new HashSet<>(Arrays.asList(new String[]{ TREELABELALL }));
 
     private FilterIndoorLevel filterLevel;
 
@@ -101,18 +111,24 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
      */
     public FloorsFilterDialog() {
         super(tr("Indoor features"), "floors", tr("Fiter levels and graphs. Communication to the i-locate server."), null, 162);
+        
+        if(null != INSTANCE) {
+            Main.error("[FloorsFilterDialog.FloorsFilterDialog] Only one instance is allowed");
+            System.exit(1);
+        }
+        INSTANCE = this;
         sp = new TreePath[2];
         sp[0] = null;
         sp[1] = null;
         setIsButtonHiding(ButtonHidingType.ALWAYS_HIDDEN);
         filterLevel = new FilterIndoorLevel();
-        build();
+        build(false);
     }
 
     @Override
     public void showNotify() {
         DatasetEventManager.getInstance().addDatasetListener(this, FireMode.IN_EDT_CONSOLIDATED);
-        build();
+        build(false);
         // Repaint of the dialog
     }
 
@@ -128,26 +144,34 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         return null==o;
     }
 
-    public void removeNodes(DefaultMutableTreeNode root) {
+    public void removeNodes(DefaultMutableTreeNode node, DefaultTreeModel model) {
 
         Main.debug("removeNodes()");
-       root.removeAllChildren();
+        
+//        @SuppressWarnings("unchecked")
+//        Enumeration<DefaultMutableTreeNode> ch = node.children();
+//        while(ch.hasMoreElements()) {
+//            model.removeNodeFromParent(ch.nextElement());
+//        }
+        
+        node.removeAllChildren();
+        model.reload(node);
     }
     
-    final static private Set<String> specialFloors = new HashSet<>(Arrays.asList(new String[]{"All"}));
+    
     /**
      * addNodes/updateNodes() Call this method after build()
+     * @param treeModel 
      */ 
-    public void addNodes(FloorMutableTreeNode root) {
+    public void addNodes(FloorMutableTreeNode root, DefaultTreeModel treeModel) {
 
         Main.debug("addNodes()");
         
-        DataSet ds = Main.main.getCurrentDataSet();
         Map<Integer, FloorMutableTreeNode> floors = new HashMap<>();
         
         //Main.debug("Is ds null? " + (null==ds ? "Yes" : "No"));
         
-        if(isItNull(ds,"ds")) {
+        if(isItNull(PescePlugin.ds,"ds")) {
             return; // I can't add nothing now
         }
         
@@ -190,12 +214,13 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 //        //floors.get(0).add(new FloorMutableTreeNode("0 test", false));
 //
 
-        Main.debug("======");
-        
         try {
-            ds.beginUpdate();
-            final Collection<OsmPrimitive> all = ds.allNonDeletedCompletePrimitives();
-            Main.debug("Number of osm primitives >>>>> "+all.size());
+            PescePlugin.ds.beginUpdate();
+            final Collection<OsmPrimitive> all = PescePlugin.ds.allNonDeletedCompletePrimitives();
+            Main.debug("Number of osm primitives: "+all.size());
+            
+            int[] nodesLevelsCount = new int[] {0,0};
+            
             for (OsmPrimitive primitive : all) {
 
                 if (!(primitive instanceof Node)) {
@@ -204,21 +229,28 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 }
                 int primitiveLevel = primitive.getKeys().containsKey(FilterIndoorLevel.LEVEL) ? Integer.parseInt(primitive.get(FilterIndoorLevel.LEVEL)) : Constants.MISSEDLEVEL;
                 
+                // Logging
+                if(primitiveLevel>=0 && primitiveLevel<=1) {
+                    nodesLevelsCount[primitiveLevel]++;
+                }
+                
                 FloorMutableTreeNode floor = floors.get(primitiveLevel);
                 if (null == floor) {
                     Main.debug("Create a floor: "+primitiveLevel);
-                    floors.put(primitiveLevel, floor = new FloorMutableTreeNode(""+primitiveLevel));
-                    root.add(floor);
-                    Main.debug("Add to root "+primitiveLevel+" "+floor);
+                    floors.put(primitiveLevel, floor = new FloorMutableTreeNode(Constants.MISSEDLEVEL == primitiveLevel ? Constants.MISSEDLEVELJTREEREP : ""+primitiveLevel));
+                    //root.add(floor); // XXX MODEL
+                    treeModel.insertNodeInto(floor, root, root.getChildCount());
+                    Main.debug("Add to root floor "+floor+" (label)");
                 }
                 
-
-                PrimitiveId osmId = primitive.getPrimitiveId();
-                PrimitiveUserObject nodeUserObj = new PrimitiveUserObject(osmId, primitive.getName());
-                
-                floor.add(new FloorMutableTreeNode(nodeUserObj, false));
+                floor.add(new FloorMutableTreeNode(new PrimitiveUserObject(primitive.getPrimitiveId(), primitive.getName()), false));
             }
+            
+            Main.debug("[...addNodes] Feature level 0: "+nodesLevelsCount[0]+" Feature level 1: "+nodesLevelsCount[1]);
 
+            // Yet into the tree
+            //root.add(new FloorMutableTreeNode("All"));
+            
             // Order all children
 
             // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
@@ -226,54 +258,71 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             Main.debug("ERORE "+e1.getMessage());
         }
         finally {
-            ds.endUpdate();
+            PescePlugin.ds.endUpdate();
 //            Main.debug("changed=" + changed);
 //            if (changed)
 //                repaint();
         }
         Main.debug(">>>>>>>>>>>>>>>> "+floors.size());
-        
-        FloorMutableTreeNode all = new FloorMutableTreeNode("All");
-        root.add(all);
         //fu1.add(new FloorMutableTreeNode("eee", false));
         //fu1.add(new FloorMutableTreeNode("rrr", false));
         
-        for(int i : floors.keySet()) {
-            Main.debug("Add to root "+i);
-            FloorMutableTreeNode floor = floors.get(i);
-            //root.add(floor); //moved up
-        }
+//        for(int i : floors.keySet()) {
+//            Main.debug("Add to root "+i);
+//            FloorMutableTreeNode floor = floors.get(i);
+//            //root.add(floor); //moved up
+//        }
     }
-    
-    private JTree tree = null; // Very final
-    JTree treeGraphs = null;
 
-    private void build() {
+    private void build(boolean dataSetChanged) {
 
-        Main.debug("build()");
+        //DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
+        if(PescePlugin.ds != Main.main.getCurrentDataSet()) {
+            Main.error("[...build] DATASET NOT UPDATED!!!! ");
+            PescePlugin.ds = Main.main.getCurrentDataSet();
+        }
         
+        //DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
+        
+        Main.debug("[FloorsFilterDialog] build()");
+        
+        if(dataSetChanged) {
+            Main.debug("Here I'd create a new interface based on the new dataset");
+            String log = "";
+            
+            log += "tree "+tree+"\n";
+            
+            FloorMutableTreeNode root = (FloorMutableTreeNode) tree.getModel().getRoot();
+            log += "root "+root+"\n";
+            log += "morechildren "+root.children().hasMoreElements()+"\n";
+            
+            Main.debug(log);
+        }
+        
+        DefaultTreeModel  treeModel;
         FloorMutableTreeNode root;
-        if(null == tree) {
+        if (null == tree) {
+            
+            // I init the tree only once.
+            
             Main.debug("Init tree");
             tree = new JTree(root = new FloorMutableTreeNode("Floors"));
             
-            ///////////////////////////////////////
 
             tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
                 @Override
                 public void valueChanged(TreeSelectionEvent e) {
-                    
-                    if(2 == tree.getSelectionCount()) {
+
+                    if (2 == tree.getSelectionCount()) {
                         // I sected 2 objects, do nothing
                         return;
                     }
-                    
-                    filterLevel.updateDataset(); // I don't know when this is needed
+
                     //selectedLabel.setText(e.getPath().toString());
                     TreePath p = e.getPath();
 
                     //Main.debug("@"+tree.getRowForPath(p));
-                    if(p.getPathCount() == TREESTATES) {
+                    if (p.getPathCount() == TREESTATES) {
                         // A node is selected
 
                         Main.debug("[valueChanged] Node: " + ((PrimitiveUserObject) ((FloorMutableTreeNode) p.getLastPathComponent()).getUserObject()));
@@ -291,6 +340,8 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                     if (FloorsFilterDialog.TREELABELALL.equals(floorLabel)) {
                         // Do not filter levels
                         level = Constants.ALLLEVELS;
+                    } else if(Constants.MISSEDLEVELJTREEREP.equals(floorLabel)) {
+                        level = Constants.MISSEDLEVEL;
                     } else {
                         level = Integer.parseInt(floorLabel);
                     }
@@ -299,16 +350,16 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                     if (p.getPathCount() > TREEFLOOR) {
                         // TODO: The level 3 () is selected: the state
                         Main.debug("You are clicking states, we'll work on selection here");
-                        
+
                         // I can work on selection here.
                         // Policy: keep selected 2 states clicked.
                         //         If 2 states is yet seceted, start from 
                         //         the begin and select only the clicked state.
                         //         click a floor cancel states selection
-                        if(null == sp[0] || null != sp[0] && null != sp[1]) {
+                        if (null == sp[0] || null != sp[0] && null != sp[1]) {
                             sp[0] = p;
                             sp[1] = null;
-                        } else if(null == sp[1]) {
+                        } else if (null == sp[1]) {
                             sp[1] = p;
                             tree.setSelectionPaths(sp);
                         } else {
@@ -321,143 +372,166 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 }
             });
 
-         SideButton uploadButton = new SideButton(new AbstractAction() {
-             {
-                 putValue(NAME, tr("Upload"));
-                 putValue(SHORT_DESCRIPTION,  tr("Upload all layers to {0}","i-locate"));
-                 putValue(SMALL_ICON, ImageProvider.get("dialogs","up"));
-             }
-             @Override
-             public void actionPerformed(ActionEvent e) {
-                 Main.debug("Upload all datasets!");
-                 
-                 for(UploadInfo info : PescePlugin.getUploadInfo()) {
-                     Main.debug("[FloorsFilterDialog.uploadButton.actionPerformed] "+info.layerName+" "+info.dataSet.toString());
-                     IlocateUploadTask task = new IlocateUploadTask(info.layerName, NullProgressMonitor.INSTANCE, false);
-                     
-                     
-                     Main.worker.submit(task);
-                 }
-                 
-                 //filterLevel.show(Constants.PREVIOUSLEVEL);
-                 
-                 if (Main.isDisplayingMapView()) {
-                     Main.map.mapView.repaint();
-                    /// Main.map.filterDialog.updateDialogHeader();
-                 }
-             }});
-         
-         SideButton linkButton = new SideButton(new AbstractAction() {
-             {
-                 putValue(NAME, tr("Link"));
-                 putValue(SHORT_DESCRIPTION,  tr("Select 2 states and link them"));
-                 putValue(SMALL_ICON, ImageProvider.get("dialogs","linknodes"));
-             }
-             @Override
-             public void actionPerformed(ActionEvent e) {
-                 Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] Create a link");
+            SideButton uploadButton = new SideButton(new AbstractAction() {
+                {
+                    putValue(NAME, tr("Upload"));
+                    putValue(SHORT_DESCRIPTION, tr("Upload all layers to {0}", "i-locate"));
+                    putValue(SMALL_ICON, ImageProvider.get("dialogs", "up"));
+                }
 
-                 // TODO: take the 2 selected nodes and create a link 
-                 TreePath[] paths = tree.getSelectionPaths();
-                 if(2 == tree.getSelectionCount() && paths[0].getPathCount() == TREESTATES && paths[1].getPathCount() == TREESTATES) {
-                     // GOOD
-                     PrimitiveUserObject treeNode1 =  (PrimitiveUserObject) ((FloorMutableTreeNode) paths[0].getLastPathComponent()).getUserObject();
-                     PrimitiveUserObject treeNode2 =  (PrimitiveUserObject) ((FloorMutableTreeNode) paths[1].getLastPathComponent()).getUserObject();
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Main.debug("Upload all datasets!");
 
-                     // TODO: link them
-                     
-                     Main.debug(treeNode1+","+treeNode2);
-                     
-                     DataSet ds = Main.main.getCurrentDataSet();
-                     
-                     Node node1 = (Node) ds.getPrimitiveById(treeNode1.id);
-                     Node node2 = (Node) ds.getPrimitiveById(treeNode2.id);
+                    for (UploadInfo info : PescePlugin.getUploadInfo()) {
+                        Main.debug("[FloorsFilterDialog.uploadButton.actionPerformed] " + info.layerName + " " + info.dataSet.toString());
+                        IlocateUploadTask task = new IlocateUploadTask(info.layerName, NullProgressMonitor.INSTANCE, false);
 
-                     Relation relation1 = null, relation2 = null;
-                     // Problem:
-                     // The link between A and B has to be unique
-                     // And belong to the same graph
-                     Set<Long> node1Ways = new HashSet<>(), node2Ways = new HashSet<>();
-                     for(OsmPrimitive ref : node1.getReferrers()) {
-                         if(ref instanceof Way) {
-                             node1Ways.add(ref.getUniqueId());
-                         } else if(ref instanceof Relation) {
-                             // This has to be unique
-                             if(null != relation1) {
-                                 Main.warn("[...linkButton.actionPerformed] The node belongs to more than one relation.");
-                             }
-                             relation1 = (Relation) ref;
-                         }
-                     }
-                     for(OsmPrimitive ref : node2.getReferrers()) {
-                         if(ref instanceof Way) {
-                             node2Ways.add(ref.getUniqueId());
-                         } else if(ref instanceof Relation) {
-                             // This has to be unique
-                             if(null != relation2) {
-                                 Main.warn("[...linkButton.actionPerformed] The node belongs to more than one relation.");
-                             }
-                             relation2 = (Relation) ref;
-                         }
-                     }
-                     
-                     // Check the format
-                     if(null==relation1 || null==relation2) {
-                         Main.warn("[...linkButton.actionPerformed] node1 or node2 doesn't have a Graph");
-                         // TODO: create a message for the user: node1 or node2 doesn't have a Graph
-                         return;
-                     }
-                     if(relation1 != relation2) {
-                         Main.warn("[...linkButton.actionPerformed] relation1 and relation2 are different. Wrong data format");
-                         // TODO: create a message for the user: relation1 and relation2 are different. Wrong data format
-                         return;
-                     }
-                     
-                     if (Collections.disjoint(node1Ways, node2Ways)) {
-                     
-                         Way link = new Way();
-        
-                         link.addNode(node1);
-                         link.addNode(node2);
-        
-                         // IL -> InterLayer 
-                         // Lexically order the names
-                         link.put("name","IL"+(node1.getName().compareTo(node2.getName()) < 0 ? node1.getName()+node2.getName() : node2.getName()+node1.getName()));
-                         
+                        Main.worker.submit(task);
+                    }
+
+                    //filterLevel.show(Constants.PREVIOUSLEVEL);
+
+                    if (Main.isDisplayingMapView()) {
+                        Main.map.mapView.repaint();
+                        /// Main.map.filterDialog.updateDialogHeader();
+                    }
+                }
+            });
+
+            SideButton linkButton = new SideButton(new AbstractAction() {
+                {
+                    putValue(NAME, tr("Link"));
+                    putValue(SHORT_DESCRIPTION, tr("Select 2 states and link them"));
+                    putValue(SMALL_ICON, ImageProvider.get("dialogs", "linknodes"));
+                }
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] Create a link");
+
+                    // TODO: take the 2 selected nodes and create a link 
+                    TreePath[] paths = tree.getSelectionPaths();
+                    if (2 == tree.getSelectionCount() && paths[0].getPathCount() == TREESTATES && paths[1].getPathCount() == TREESTATES) {
+                        // GOOD
+                        PrimitiveUserObject treeNode1 = (PrimitiveUserObject) ((FloorMutableTreeNode) paths[0].getLastPathComponent()).getUserObject();
+                        PrimitiveUserObject treeNode2 = (PrimitiveUserObject) ((FloorMutableTreeNode) paths[1].getLastPathComponent()).getUserObject();
+
+                        // TODO: link them
+
+                        Main.debug(treeNode1 + "," + treeNode2);
+
+                        Node node1 = (Node) PescePlugin.ds.getPrimitiveById(treeNode1.id);
+                        Node node2 = (Node) PescePlugin.ds.getPrimitiveById(treeNode2.id);
+
+                        Relation relation1 = null, relation2 = null;
+                        // Problem:
+                        // The link between A and B has to be unique
+                        // And belong to the same graph
+                        Set<Long> node1Ways = new HashSet<>(), node2Ways = new HashSet<>();
+                        for (OsmPrimitive ref : node1.getReferrers()) {
+                            if (ref instanceof Way) {
+                                node1Ways.add(ref.getUniqueId());
+                            } else if (ref instanceof Relation) {
+                                // This has to be unique
+                                if (null != relation1) {
+                                    Main.warn("[...linkButton.actionPerformed] The node belongs to more than one relation.");
+                                }
+                                relation1 = (Relation) ref;
+                            }
+                        }
+                        for (OsmPrimitive ref : node2.getReferrers()) {
+                            if (ref instanceof Way) {
+                                node2Ways.add(ref.getUniqueId());
+                            } else if (ref instanceof Relation) {
+                                // This has to be unique
+                                if (null != relation2) {
+                                    Main.warn("[...linkButton.actionPerformed] The node belongs to more than one relation.");
+                                }
+                                relation2 = (Relation) ref;
+                            }
+                        }
+
+                        // Check the format
+                        if (null == relation1 || null == relation2) {
+                            Main.warn("[...linkButton.actionPerformed] node1 or node2 doesn't have a Graph");
+                            // TODO: create a message for the user: node1 or node2 doesn't have a Graph
+                            return;
+                        }
+                        if (relation1 != relation2) {
+                            Main.warn("[...linkButton.actionPerformed] relation1 and relation2 are different. Wrong data format");
+                            // TODO: create a message for the user: relation1 and relation2 are different. Wrong data format
+                            return;
+                        }
+
+                        if (Collections.disjoint(node1Ways, node2Ways)) {
+
+                            Way link = new Way();
+
+                            link.addNode(node1);
+                            link.addNode(node2);
+
+                            // IL -> InterLayer 
+                            // Lexically order the names
+                            link.put("name", "IL" + (node1.getName().compareTo(node2.getName()) < 0 ? node1.getName() + node2.getName() : node2.getName() + node1.getName()));
 
 //                         Main.debug("ZZZ "+ds.getRelations().contains(relation1));
 //                         Main.debug("ZZZ "+ds.getNodes().contains(node1));
 //                         Main.debug("ZZZ "+ds.getNodes().contains(node2));
 //                         Main.debug("ZZZ "+ds.getWays().contains(link));
-                         
-                         ds.addPrimitive(link);
-                         
+
+                           PescePlugin.ds.addPrimitive(link);
+
 //                         Main.debug("ZZZ "+ds.getWays().contains(link));
 //
 //                         Main.debug("XXX "+ds.isSelected(relation1));
 //                         Main.debug("XXX "+ds.isSelected(node1));
 //                         Main.debug("XXX "+ds.isSelected(node2));
-                         
 
-                         // Add link to relation1/2
-                         relation1.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, link));
-                         
-                     } else {
-                         // TODO: create a message for the user: this link exists yet.
-                         Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] This link exists yet");
-                     }
-                     
-                 } else {
-                     // TODO error message
-                     Main.debug("Quality or quantity of selectec features aren't suitable to create a link. Number: "+tree.getSelectionCount());
-                 }
-                 
-                 //filterLevel.show(Constants.PREVIOUSLEVEL);
-                 
-                 if (Main.isDisplayingMapView()) {
-                     Main.map.mapView.repaint();
-                 }
-             }});
+                            // Add link to relation1/2
+                            relation1.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, link));
+
+                        } else {
+                            // TODO: create a message for the user: this link exists yet.
+                            Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] This link exists yet");
+                        }
+
+                    } else {
+                        // TODO error message
+                        Main.debug("Quality or quantity of selectec features aren't suitable to create a link. Number: " + tree.getSelectionCount());
+                    }
+
+                    //filterLevel.show(Constants.PREVIOUSLEVEL);
+
+                    if (Main.isDisplayingMapView()) {
+                        Main.map.mapView.repaint();
+                    }
+                }
+            });
+
+            SideButton newGraphButton = new SideButton(new AbstractAction() {
+                {
+                    putValue(NAME, tr("New graph"));
+                    putValue(SHORT_DESCRIPTION, tr("Add a new IndoorGML graph"));
+                    putValue(SMALL_ICON, ImageProvider.get("dialogs", "newgraph"));
+                }
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String name = JOptionPane.showInputDialog("Enter the graph name");
+                    if(null != name) {
+                        // TODO: check null pointer exception?
+                        DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGraphs.getModel().getRoot();
+                        
+                        Relation relation = new Relation();
+                        relation.put("name", name); // TODO: inser all Indoor graph here. TODO TODO: Create a newIndoorGraph somewhere 
+                        PescePlugin.ds.addPrimitive(relation);
+                        
+                        rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(relation.getPrimitiveId(), relation.getName())));
+                           
+                    }
+                }
+
+            });
          
          //uploadButton.setPreferredSize(new Dimension(200, 100));
          
@@ -497,6 +571,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
              buttonRowPanel.add(uploadButton);
              buttonRowPanel.add(linkButton);
+             buttonRowPanel.add(newGraphButton);
              
              this.add(buttonRowPanel,BorderLayout.SOUTH);
 
@@ -510,14 +585,13 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                     // 0. Hide the objects on the map (real hiding);
                     // 1. Don't show the 
                     Main.debug("[FloorsFilterDialog.treeGraphs.addTreeSelectionListener] Graphs selection");
-                    DataSet ds = Main.main.getCurrentDataSet();
                     
                     TreePath p = e.getPath();
                     if(p.getPathCount() == 2) {
                         // A graph is selected
                         PrimitiveUserObject primitiveNode = (PrimitiveUserObject) ((DefaultMutableTreeNode) p.getLastPathComponent()).getUserObject();
                         
-                        filterLevel.show((Relation) ds.getPrimitiveById(primitiveNode.id), false);
+                        filterLevel.show((Relation) PescePlugin.ds.getPrimitiveById(primitiveNode.id), false);
                     } else {
                         // Show all graphs
                         filterLevel.showAllGraphs();
@@ -535,20 +609,25 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 //             }));
              
             ///////////////////////////////////////
+             
+            treeModel = (DefaultTreeModel) tree.getModel();
             
         } else {
             Main.debug("get tree");
-            root = (FloorMutableTreeNode) tree.getModel().getRoot();
-            removeNodes(root);
-            FloorMutableTreeNode all = new FloorMutableTreeNode(TREELABELALL, false);
-            //root.add(all);
+            treeModel = (DefaultTreeModel) tree.getModel();
+            root = (FloorMutableTreeNode) treeModel.getRoot();
+            removeNodes(root, treeModel);
+            
         }
 
-        
+        FloorMutableTreeNode all = new FloorMutableTreeNode(TREELABELALL, false);
+        //root.add(all);
+        // XXX MODEL
+        treeModel.insertNodeInto(all, root, 0);
 
-        FloorMutableTreeNode fu1 = new FloorMutableTreeNode("-2"+new Random().nextInt(100));
-        FloorMutableTreeNode f0 = new FloorMutableTreeNode("10");
-        FloorMutableTreeNode f1 = new FloorMutableTreeNode("11");
+//        FloorMutableTreeNode fu1 = new FloorMutableTreeNode("-2"+new Random().nextInt(100));
+//        FloorMutableTreeNode f0 = new FloorMutableTreeNode("10");
+//        FloorMutableTreeNode f1 = new FloorMutableTreeNode("11");
 
 //        root.add(f0);
 //        f0.add(new FloorMutableTreeNode("Example Fake Node", false));
@@ -566,7 +645,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         tree.setRootVisible(false);
 
         
-        addNodes(root);
+        addNodes(root, treeModel);
 
         root.sortChildren();
 
@@ -578,13 +657,16 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 //            tree.makeVisible(new TreePath(e.nextElement().getPath()));
 //        }
 
-        DataSet ds = Main.main.getCurrentDataSet();
-        if(null != ds) {
-            Main.debug(String.format("[FloorsFilterDialog.build] Add %d relations to the Graphs tree", ds.getRelations().size()));
+        
+        // Compile Graphs part
+        if(null != PescePlugin.ds) {
+            Main.debug(String.format("[FloorsFilterDialog.build] Add %d relations to the Graphs tree", PescePlugin.ds.getRelations().size()));
             DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGraphs.getModel().getRoot();
-            removeNodes(rootGraphs);
-            for(Relation relation : ds.getRelations()) {
-                rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(relation.getPrimitiveId(), relation.getName())));
+            DefaultTreeModel treeGhraphsModel = (DefaultTreeModel) treeGraphs.getModel();
+            removeNodes(rootGraphs, treeGhraphsModel);
+            for(Relation relation : PescePlugin.ds.getRelations()) {
+                //rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(relation.getPrimitiveId(), relation.getName())));
+                treeGhraphsModel.insertNodeInto(new DefaultMutableTreeNode(new PrimitiveUserObject(relation.getPrimitiveId(), relation.getName())), rootGraphs, rootGraphs.getChildCount());
             }
             
             //YYY ((DefaultMutableTreeNode)rootGraphs.children().nextElement()).
@@ -598,9 +680,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 //                treeGraphs.makeVisible(new TreePath(e1.nextElement().getPath()));
 //            }
         } else {
-            Main.debug("[FloorsFilterDialog.build] DataSet not defined yet");
+            //Main.debug("[FloorsFilterDialog.build] DataSet not defined yet");
         }
-        
+        Main.debug("[...build] End of build()");
     }
 
     @Override
@@ -608,49 +690,24 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         super.destroy();
     }
 
-    /**
-     * Returns the list of primitives whose filtering can be affected by change in primitive
-     * 
-     * @param primitives
-     *            list of primitives to check
-     * @return List of primitives whose filtering can be affected by change in source primitives
-     */
-    private Collection<OsmPrimitive> getAffectedPrimitives(Collection<? extends OsmPrimitive> primitives) {
-        // Filters can use nested parent/child expression so complete tree is necessary
-        Set<OsmPrimitive> result = new HashSet<>();
-        Stack<OsmPrimitive> stack = new Stack<>();
-        stack.addAll(primitives);
-
-        while (!stack.isEmpty()) {
-            OsmPrimitive p = stack.pop();
-
-            if (result.contains(p)) {
-                continue;
-            }
-
-            result.add(p);
-
-            if (p instanceof Way) {
-                for (OsmPrimitive n : ((Way) p).getNodes()) {
-                    stack.push(n);
-                }
-            } else if (p instanceof Relation) {
-                for (RelationMember rm : ((Relation) p).getMembers()) {
-                    stack.push(rm.getMember());
-                }
-            }
-
-            for (OsmPrimitive ref : p.getReferrers()) {
-                stack.push(ref);
-            }
-        }
-
-        return result;
-    }
-
     @Override
     public void dataChanged(DataChangedEvent event) {
-        Main.debug("\t\tA dataChanged");
+        Main.debug("\t\tA dataChanged "+event.getDataset());
+        
+        // Is dataSet changed? Josm whips it's datasets back and forth.
+        DataSet newDs = event.getDataset();
+        if(newDs != PescePlugin.ds) {
+            Main.debug("[FloorsFilterDialog.dataChanged] Update the dataSet");
+            PescePlugin.ds = newDs;
+            // Fire a lot of things here!!!
+//            tree = null;
+//            treeGraphs = null;
+            build(true);
+            //INSTANCE.repaint();
+        } else {
+            // The DataSet is ok, what did it change?
+            
+        }
     }
 
     @Override
@@ -665,6 +722,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
     @Override
     public void primitivesAdded(PrimitivesAddedEvent event) {
+        if(event.wasIncomplete()) {
+            return;
+        }
         Main.debug("\t\tc primitivesAdded");
     }
 

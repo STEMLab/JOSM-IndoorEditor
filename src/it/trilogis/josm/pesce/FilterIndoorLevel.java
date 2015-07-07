@@ -16,21 +16,13 @@ import org.openstreetmap.josm.gui.layer.Layer;
 
 public class FilterIndoorLevel {
 
-
-    
-    private DataSet ds;
     public final static String LEVEL = "indoor:level"; // TODO: move to...
     
     private int currentLevel = Constants.ALLLEVELS;
     private IsMember isInGraph;
     
     public FilterIndoorLevel() {
-        updateDataset();
         isInGraph = new AlwaysMember();
-    }
-    
-    public void updateDataset() {
-        ds = Main.main.getCurrentDataSet();
     }
     
     private static class IsMember {
@@ -78,11 +70,10 @@ public class FilterIndoorLevel {
             isInGraph = new IsMember(graph);
         }
       
-        updateDataset();
-        //try
+        try
         {
-            ds.beginUpdate();
-            final Collection<OsmPrimitive> all = ds.allNonDeletedCompletePrimitives();
+            PescePlugin.ds.beginUpdate();
+            final Collection<OsmPrimitive> all = PescePlugin.ds.allNonDeletedCompletePrimitives();
             for (OsmPrimitive p : all) {
                 //Main.debug(p instanceof Relation ? "Relation" : p instanceof Way ? "Way" : p instanceof Node ? "Node" : "Error");
                 
@@ -108,15 +99,15 @@ public class FilterIndoorLevel {
             }
             
             // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
-            ds.clearSelection(deselect);
+            PescePlugin.ds.clearSelection(deselect);
         } 
-        //finally 
+        finally 
         {
-            ds.endUpdate();
+            PescePlugin.ds.endUpdate();
             Main.debug("changed="+changed);
             if(changed) repaint();
             
-            if(!deselect.isEmpty()) ds.clearSelection(deselect);
+            if(!deselect.isEmpty()) PescePlugin.ds.clearSelection(deselect);
             
             currentLevel = level;
         }

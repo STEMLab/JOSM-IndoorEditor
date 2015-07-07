@@ -63,9 +63,19 @@ public class IlocateUploadTask extends PleaseWaitRunnable {
             StringWriter sw = new StringWriter();
             String contentType = null;
             
+            OsmDataLayer layer = PescePlugin.getLayer(info.dataSet);
+            if(null != layer) {
+                layer.onPostUploadToServer();
+                Main.debug("[IlocateUploadTask.realRun] Layer name: "+layer.getName());
+            } else {
+                Main.error("[IlocateUploadTask.realRun] Layer not found. It could be removed");
+                cancel();
+                return;
+            }
+            
             switch(info.type) {
             case BUILDING:
-                Main.debug("[IlocateUploadTask.realRun] Geojson not implemented");
+                Main.debug("[IlocateUploadTask.realRun] Building layer upload not implemented");
                 contentType = "application/json";
                 break;
             case IGML:
@@ -73,12 +83,7 @@ public class IlocateUploadTask extends PleaseWaitRunnable {
                 PesceExporter.doSave(sw, info.dataSet);
                 // I need the OsmLayer of dataset here
                 // layer.onPostUploadToServer();
-                OsmDataLayer layer = PescePlugin.getLayer(info.dataSet);
-                if(null != layer) {
-                    layer.onPostUploadToServer();
-                } else {
-                    Main.error("[IlocateUploadTask.realRun] Layer not found");
-                }
+
                 
                 contentType = "text/xml";
                 break;
@@ -88,8 +93,11 @@ public class IlocateUploadTask extends PleaseWaitRunnable {
             progressMonitor.beginTask(tr("Uploading {0} data...",info.layerName));
             
             // String diffUploadResponse = sendRequest("POST", "changeset/" + changeset.getId() + "/upload", diffUploadRequest,monitor);
-            response = postRequest(new URL(info.url), sw.toString(), contentType, progressMonitor, false, true);
-            Main.debug(response);
+            boolean uploadImplemented = false;
+            if(uploadImplemented) {
+                response = postRequest(new URL(info.url), sw.toString(), contentType, progressMonitor, false, true);
+                Main.debug(response);
+            }
         }
 
         

@@ -121,7 +121,8 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
         private LayerType type;
 
         public DownloadTask(boolean newLayer, String url, ProgressMonitor progressMonitor) {
-            super(newLayer, tr("Downloading i-locate data"), progressMonitor, false);
+            // Always create a new level
+            super(true, tr("Downloading i-locate data"), progressMonitor, false);
             this.url = url;
         }
 
@@ -150,7 +151,7 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
                     
                     Main.debug("[DownloadIlocateTask.DownloadTask.realRun] Portal section url. Not implemented");
                     Matcher matcher = Pattern.compile(PATTERN_ILOCATE_SECTION).matcher(url);
-                    String newLayerName = matcher.matches() ? tr("Section {0}",matcher.group(1)) : null;
+                    newLayerName = matcher.matches() ? tr("Section {0}",matcher.group(1)) : null;
                     Main.debug("[DownloadIlocateTask.DownloadTask.realRun] Parsing shapefile " + (newLayerName == null ? "" : newLayerName));
                                         
                     dataSet = ZippedShpReader.parseDataSet(in, null, subMonitor, true);

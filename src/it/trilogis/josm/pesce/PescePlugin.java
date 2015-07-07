@@ -28,10 +28,12 @@ import org.openstreetmap.josm.actions.ExtensionFileFilter;
 
 public class PescePlugin extends Plugin {
     
-    private FloorsFilterDialog dialog;
+    private FloorsFilterDialog dialog = null;
     
     static private List<UploadInfo> uploadInfo = null;
     static PescePlugin instance = null;
+    
+    static public DataSet ds = null; // Always updated DataSet: changeData keeps this updated
     
     public PescePlugin() {
         super(null);
@@ -72,16 +74,20 @@ public class PescePlugin extends Plugin {
     
     @Override
     public void mapFrameInitialized(MapFrame oldFrame, MapFrame newFrame) {
-        Main.debug(String.format("Signal: mapFrameInitialized %s %s", null==oldFrame ? "null" : "defined", null==newFrame ? "null" : "defined"));
-        
+        Main.debug(String.format("Signal: mapFrameInitialized %s %s", null == oldFrame ? "null" : "defined", null == newFrame ? "null" : "defined"));
+
         // if new frame is just created
-        if(null==oldFrame && null!=newFrame) {
-          newFrame.addToggleDialog(dialog = new FloorsFilterDialog());    
-        } else if(null!=oldFrame && null==newFrame) {
+        if (null == oldFrame && null != newFrame) {
+            if (null == dialog) {
+                dialog = new FloorsFilterDialog();
+            }
+            newFrame.addToggleDialog(dialog);
+        } else if (null != oldFrame && null == newFrame) {
             // destroy dialog. Is this needed? FIXME
             //dialog.destroy();    
-          } 
-        
+        } else if (null != oldFrame && null == newFrame) {
+        }
+
     }
     
     // Save here information about downloaded layers
