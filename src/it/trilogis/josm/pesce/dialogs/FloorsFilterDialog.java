@@ -238,12 +238,11 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 if (null == floor) {
                     Main.debug("Create a floor: "+primitiveLevel);
                     floors.put(primitiveLevel, floor = new FloorMutableTreeNode(Constants.MISSEDLEVEL == primitiveLevel ? Constants.MISSEDLEVELJTREEREP : ""+primitiveLevel));
-                    //root.add(floor); // XXX MODEL
                     treeModel.insertNodeInto(floor, root, root.getChildCount());
                     Main.debug("Add to root floor "+floor+" (label)");
                 }
-                
-                floor.add(new FloorMutableTreeNode(new PrimitiveUserObject(primitive.getPrimitiveId(), primitive.getName()), false));
+                String name = primitive.getName();
+                floor.add(new FloorMutableTreeNode(new PrimitiveUserObject(primitive.getPrimitiveId(), name==null ? ""+primitive.getPrimitiveId() : name), false));
             }
             
             Main.debug("[...addNodes] Feature level 0: "+nodesLevelsCount[0]+" Feature level 1: "+nodesLevelsCount[1]);
@@ -706,7 +705,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             //INSTANCE.repaint();
         } else {
             // The DataSet is ok, what did it change?
-            
+            Main.debug("[FloorsFilterDialog.dataChanged] The DataSet is ok, what did it change?");
         }
     }
 
@@ -723,13 +722,16 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     @Override
     public void primitivesAdded(PrimitivesAddedEvent event) {
         if(event.wasIncomplete()) {
+            Main.debug("\t\tc incompletePrimitivesAdded");
             return;
         }
-        Main.debug("\t\tc primitivesAdded");
+        Main.debug("\t\tc primitivesAdded (Only the first node added trigs this event)");
     }
 
     @Override
     public void primitivesRemoved(PrimitivesRemovedEvent event) {
+        Main.debug("\t\tcc primitivesRemoved");
+        event.wasComplete();
     }
 
     @Override
@@ -757,6 +759,15 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
     static private class FloorMutableTreeNode extends DefaultMutableTreeNode implements Comparable<FloorMutableTreeNode> {
 
+        static private boolean isNumber(String s) {
+            try {
+                Integer.parseInt(s);
+            } catch(Exception e) {
+                return false;
+            }
+            return true;
+        }
+        
         public FloorMutableTreeNode(Object userObject, boolean allowsChildren) {
             super(userObject, allowsChildren);
         }
@@ -776,17 +787,18 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         public int compareTo(FloorMutableTreeNode o) {
             String x = (String) this.getUserObject();
             String y = (String) o.getUserObject();
+            boolean isXNumber = isNumber(x), isYNumber = isNumber(y);
             int r;
             //Main.debug("x="+x+" y="+y);
-            if (FloorsFilterDialog.TREELABELALL.equals(x)) {
-                r = Integer.compare(0, 1);
-            }
-            else if (FloorsFilterDialog.TREELABELALL.equals(y)) {
-                r =  Integer.compare(1, 0);
-            } else {
+            if(isXNumber && isYNumber) {
                 r = Integer.compare(Integer.parseInt(x), Integer.parseInt(y));
+            } else if(!isXNumber && isYNumber) {
+                r = Integer.compare(0, 1);
+            } else if(isXNumber && !isYNumber) {
+                r = Integer.compare(1, 0);
+            } else {
+                r = x.compareTo(y);
             }
-            //Main.debug("Compare: "+x+" "+y+" "+r);
             return r;
         }
     }
