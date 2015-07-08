@@ -5,6 +5,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import it.trilogis.josm.pesce.Constants;
 import it.trilogis.josm.pesce.FilterIndoorLevel;
 import it.trilogis.josm.pesce.PescePlugin;
+import it.trilogis.josm.pesce.PescePlugin.LayerType;
 import it.trilogis.josm.pesce.PescePlugin.UploadInfo;
 import it.trilogis.josm.pesce.serverconnection.IlocateUploadTask;
 
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -60,6 +62,7 @@ import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.event.AbstractDatasetChangedEvent;
+import org.openstreetmap.josm.data.osm.event.AbstractDatasetChangedEvent.DatasetEventType;
 import org.openstreetmap.josm.data.osm.event.DataChangedEvent;
 import org.openstreetmap.josm.data.osm.event.DataSetListener;
 import org.openstreetmap.josm.data.osm.event.DatasetEventManager;
@@ -73,6 +76,7 @@ import org.openstreetmap.josm.data.osm.event.WayNodesChangedEvent;
 import org.openstreetmap.josm.gui.SideButton;
 import org.openstreetmap.josm.gui.dialogs.FilterTableModel;
 import org.openstreetmap.josm.gui.dialogs.ToggleDialog;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.io.BoundingBoxDownloader;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -92,6 +96,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     private static final int TREEFLOOR = 2;
     private static final int TREESTATES = 3;
 
+    public static final String IGMLLABEL = "IndoorGML mode";
+    public static final String BUILDINLABEL = "Buildings mode"; 
+
     public static final String TREELABELALL = "All"; // TODO FloorsFilterDialog.TREELABELALL
     public static final String GRAPHSLABEL = "Graphs"; // TODO FloorsFilterDialog.GRAPHSLABEL
     
@@ -99,10 +106,16 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     
     private JTree tree = null; // Very final
     private JTree treeGraphs = null;
+    
+    // Edit mode
+    private LayerType layerType = LayerType.IGML; // TODO: save this value for each level
+    private SideButton modeButton;
+    private Map<DataSet,LayerType> dsToType = null;
    
     //final static private Set<String> specialFloors = new HashSet<>(Arrays.asList(new String[]{ TREELABELALL }));
 
     private FilterIndoorLevel filterLevel;
+    
 
     private TreePath[] sp; // selected paths
 
@@ -296,6 +309,20 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             log += "morechildren "+root.children().hasMoreElements()+"\n";
             
             Main.debug(log);
+            
+            // Update button label
+            LayerType type = getLayerType(); 
+            if(null == type) {
+                type = LayerType.IGML;
+            }
+            switch(type) {
+            case IGML:
+                setIndoorgmlEditMode();
+                break;
+            case BUILDING:
+                setBuildingsEditMode();
+                break;
+            }
         }
         
         DefaultTreeModel  treeModel;
@@ -531,6 +558,53 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 }
 
             });
+            
+            SideButton newLayerButton = new SideButton(new AbstractAction() {
+                {
+                    putValue(NAME, tr("New layer"));
+                    putValue(SHORT_DESCRIPTION, tr("Add a new JOSM layer"));
+                    //putValue(SMALL_ICON, ImageProvider.get("dialogs", "newgraph"));
+                }
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String name = JOptionPane.showInputDialog("Enter the layer name");
+                    if(null != name) {
+                        // TODO implement
+                    }
+                }
+
+            });
+            
+            modeButton = new SideButton(new AbstractAction() {
+                {
+                    putValue(NAME, tr(IGMLLABEL));
+                    putValue(SHORT_DESCRIPTION, tr("Set the type of active layer"));
+                    // putValue(SMALL_ICON, ImageProvider.get("dialogs", "newgraph"));
+                }
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // First time:
+                    LayerType type = getLayerType();
+                    if(null == type) {
+                        setLayerType(LayerType.IGML);
+                        type = LayerType.IGML;
+                    }
+                    
+                    switch(type) {
+                    case IGML:
+                        setLayerType(LayerType.BUILDING);
+                        putValue(NAME, tr(BUILDINLABEL));
+                        break;
+                    case BUILDING:
+                        setLayerType(LayerType.IGML);
+                        putValue(NAME, tr(IGMLLABEL));
+                        break;
+                    } 
+                }
+
+            });
+            
+            
          
          //uploadButton.setPreferredSize(new Dimension(200, 100));
          
@@ -568,9 +642,11 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
              final JPanel buttonRowPanel = new JPanel(Main.pref.getBoolean("dialog.align.left", false)
                      ? new FlowLayout(FlowLayout.LEFT) : new GridLayout(1, 2));
 
+             buttonRowPanel.add(modeButton);
              buttonRowPanel.add(uploadButton);
              buttonRowPanel.add(linkButton);
              buttonRowPanel.add(newGraphButton);
+             buttonRowPanel.add(newLayerButton);
              
              this.add(buttonRowPanel,BorderLayout.SOUTH);
 
@@ -620,8 +696,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         }
 
         FloorMutableTreeNode all = new FloorMutableTreeNode(TREELABELALL, false);
-        //root.add(all);
-        // XXX MODEL
         treeModel.insertNodeInto(all, root, 0);
 
 //        FloorMutableTreeNode fu1 = new FloorMutableTreeNode("-2"+new Random().nextInt(100));
@@ -660,8 +734,8 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         // Compile Graphs part
         if(null != PescePlugin.ds) {
             Main.debug(String.format("[FloorsFilterDialog.build] Add %d relations to the Graphs tree", PescePlugin.ds.getRelations().size()));
-            DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGraphs.getModel().getRoot();
             DefaultTreeModel treeGhraphsModel = (DefaultTreeModel) treeGraphs.getModel();
+            DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGhraphsModel.getRoot();
             removeNodes(rootGraphs, treeGhraphsModel);
             for(Relation relation : PescePlugin.ds.getRelations()) {
                 //rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(relation.getPrimitiveId(), relation.getName())));
@@ -683,6 +757,19 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         }
         Main.debug("[...build] End of build()");
     }
+    
+    // Edit mode manipulation
+    public void setBuildingsEditMode() {
+        modeButton.getAction().putValue(Action.NAME, BUILDINLABEL);
+        setLayerType(LayerType.BUILDING);
+    }
+
+
+    public void setIndoorgmlEditMode() {
+        modeButton.getAction().putValue(Action.NAME, IGMLLABEL);
+        setLayerType(LayerType.IGML);
+    }
+    /////////////////////////
 
     @Override
     public void destroy() {
@@ -690,13 +777,32 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     }
 
     @Override
+    public void primitivesAdded(PrimitivesAddedEvent event) {
+        dataChangedOrAdded(event);
+    }
+    
+    @Override
     public void dataChanged(DataChangedEvent event) {
-        Main.debug("\t\tA dataChanged "+event.getDataset());
+        dataChangedOrAdded(event);
+    }
+
+    // Reminder:
+    // public enum DatasetEventType {DATA_CHANGED, NODE_MOVED, PRIMITIVES_ADDED, PRIMITIVES_REMOVED,
+    // RELATION_MEMBERS_CHANGED, TAGS_CHANGED, WAY_NODES_CHANGED, CHANGESET_ID_CHANGED}
+    
+    private void dataChangedOrAdded(AbstractDatasetChangedEvent event) {
+        Main.debug("\t\tA dataChangedOrAdded "+event.getDataset());
+        DatasetEventType type;
+        
+        if(event.getType() == DatasetEventType.PRIMITIVES_ADDED &&  ((PrimitivesAddedEvent)event).wasIncomplete()) {
+            Main.debug("\t\tc incompletePrimitivesAdded");
+            return;
+        }
         
         // Is dataSet changed? Josm whips it's datasets back and forth.
         DataSet newDs = event.getDataset();
         if(newDs != PescePlugin.ds) {
-            Main.debug("[FloorsFilterDialog.dataChanged] Update the dataSet");
+            Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Update the dataSet");
             PescePlugin.ds = newDs;
             // Fire a lot of things here!!!
 //            tree = null;
@@ -704,11 +810,93 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             build(true);
             //INSTANCE.repaint();
         } else {
+            type = event.getType();
             // The DataSet is ok, what did it change?
-            Main.debug("[FloorsFilterDialog.dataChanged] The DataSet is ok, what did it change?");
+            Main.debug("[FloorsFilterDialog.dataChangedOrAdded] The DataSet is ok, what did it change?");
+            Main.debug("[FloorsFilterDialog.dataChangedOrAdded] type: "+type);
+            Main.debug("[FloorsFilterDialog.dataChangedOrAdded] size: "+event.getPrimitives().size());
+            
+            Collection<AbstractDatasetChangedEvent> events;
+            switch(type) {
+            case PRIMITIVES_ADDED:
+                events = new ArrayList<>();
+                events.add(event);
+                break;
+            case DATA_CHANGED:
+                events = ((DataChangedEvent)event).getEvents();
+                break;
+            default:
+                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Change type ("+type+") not managed");
+                return;
+            }
+            
+            for(AbstractDatasetChangedEvent e : events) {
+                type = e.getType();
+                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Son type: "+type);
+                Collection<? extends OsmPrimitive> prim = e.getPrimitives();
+                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] size: "+prim.size());
+                for(OsmPrimitive p : prim) {
+                    Main.debug("[FloorsFilterDialog.dataChangedOrAdded] p: "+p.getName()+" "+p.getPrimitiveId()+" type: "+type);
+                    
+                    if(p instanceof Relation) {
+                        // New graph, refresh treeGraph
+                        build(false);
+                    } else {
+                        
+                        // Only in IndoorGML mode I'll manage graphs
+                        if(getLayerType() == LayerType.IGML) {
+                            // Node or Way
+                            Relation graph = getActiveGraph();
+                            
+                            // Check if the graph is selected 
+                            if(null == graph) {
+                                PescePlugin.ds.removePrimitive(p); // Wrong way to do this
+                                JOptionPane.showMessageDialog(null,"You must select a graph");
+                                return;
+                            }    
+                        } else {
+                            Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Buildings mode. Do nothing");
+                        }
+                        
+                        // This is a sort of debug
+                        p.put("name", ""+p.getPrimitiveId().getUniqueId());
+                    }
+                }
+            }
         }
     }
+    
+    private LayerType getLayerType() {
+        if(null == dsToType) {
+            return null;
+        }
+        return dsToType.get(PescePlugin.ds);
+    }
+    private void setLayerType(LayerType layerType) {
+        if(null == dsToType) {
+            dsToType = new HashMap<>();
+        }
+        dsToType.put(PescePlugin.ds, layerType);
+    }
 
+    // TODO: Move from here
+    /**
+     * @return Can be null
+     */
+    public Relation getActiveGraph() {
+        if(0 == treeGraphs.getSelectionCount()) {
+            return null;
+        }
+        TreePath selected = treeGraphs.getSelectionPath();
+        if(2 != selected.getPathCount()) {
+            // An element is selected, but it is not a graph
+            return null;
+        }
+        PrimitiveUserObject userObj = (PrimitiveUserObject)((DefaultMutableTreeNode) selected.getLastPathComponent()).getUserObject();
+        return (Relation) PescePlugin.ds.getPrimitiveById(userObj.id);
+    }
+    
+    
     @Override
     public void nodeMoved(NodeMovedEvent event) {
         // Do nothing
@@ -719,14 +907,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         Main.debug("\t\tb otherDatasetChange");
     }
 
-    @Override
-    public void primitivesAdded(PrimitivesAddedEvent event) {
-        if(event.wasIncomplete()) {
-            Main.debug("\t\tc incompletePrimitivesAdded");
-            return;
-        }
-        Main.debug("\t\tc primitivesAdded (Only the first node added trigs this event)");
-    }
 
     @Override
     public void primitivesRemoved(PrimitivesRemovedEvent event) {
