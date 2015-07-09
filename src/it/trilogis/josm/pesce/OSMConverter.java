@@ -90,11 +90,16 @@ public class OSMConverter {
     /*
      * This is needed by edges in order to add references of edges into nodes
      */
-    private Map<String,List<TransitionType>> transitionReferences; // state id -> transactions
+    private Map<String,List<TransitionPropertyType>> stateTransitionsReferences;
     
     private NodesType nodes(Relation spaceLayerRelation) throws ConversionException {
         NodesType nodesType = new NodesType();
-        transitionReferences = new HashMap<>();
+        stateTransitionsReferences = new HashMap<>();
+        
+        String graphName = spaceLayerRelation.getName();
+        if(null == graphName) {
+            graphName = idsFactory.newId("spaceLayer");
+        }
         
         nodesType.setId(idsFactory.newId("Nodes"));
         
@@ -103,24 +108,32 @@ public class OSMConverter {
                 Node n = member.getNode();
                 
                 StateMemberType stateMemberType;
-                String stateId;
+                String id;
                 if(n.getKeys().containsKey("name")) {
-                    stateId = n.get("name");
+                    id = n.get("name");
                 } else {
-                    stateId = idsFactory.newId("Sjosm");
+                    id = idsFactory.newId("Sjosm");
                    //throw new ConversionException("State name not defined"); // I could invent unique names (using the osm primitive id. e.g. -43 -> Sm43josm)
                 }
                 if(null == n.get(Constants.OSM_KEY_LEVEL)){
-                    throw new ConversionException("The state "+stateId+" does not have a level ("+Constants.OSM_KEY_LEVEL+")");
+                    throw new ConversionException("The state "+id+" does not have a level ("+Constants.OSM_KEY_LEVEL+")");
                 }
 
                 LatLon coor = n.getCoor();
                 
+                ////
+//                List<String> S1Transitions = new ArrayList<String>();
+//                S1Transitions.add(newTransitionTypeReferenceString("T010", "a"));
+//                S1Transitions.add(newTransitionTypeReferenceString("T001", "a"));
+//                tmpStatePosition = newPointProperty("P1", "a", "EPSG:4326", 23.556150930059, 46.071584048012, 0d);
+//                tmpNode.getStateMember().add(newStateMember(stateStairwellID, "a", "Stairwell", tmpStatePosition, S1Transitions));
+                ////
+                
                 PointPropertyType statePosition;
-                List<TransitionType> transitions = new ArrayList<>();
-                transitionReferences.put(stateId, transitions);
+                
                 statePosition = newPointProperty(idsFactory.newId("P"), Constants.SRID4326, coor.getX(), coor.getY(), Double.parseDouble(n.get(Constants.OSM_KEY_LEVEL)));
-                stateMemberType = newStateMember(stateId, stateId+" description", statePosition, transitions);
+                stateMemberType = newStateMember(id, null, statePosition, false, false); // -2: isDoor, -1: isAnchor
+                
                 nodesType.getStateMember().add(stateMemberType);
                 // TODO: get real description
                 
@@ -130,6 +143,10 @@ public class OSMConverter {
         }
         
         return nodesType;
+    }
+    
+    public String newTransitionTypeReferenceString(String transitionID) {
+        return "#" + transitionID;
     }
     
    
@@ -154,34 +171,34 @@ public class OSMConverter {
         return tmpStatePosition;
     }
     
-    private StateMemberType newStateMember(String stateId, String roomName, PointPropertyType statePosition, List<TransitionType> connectedTransitions) {
+    public StateMemberType newStateMember(String stateId, String name, PointPropertyType position, boolean isDoor, boolean isAnchorNode) {
         StateMemberType stMemb = new StateMemberType();
         // -------STATE TYPE
         StateType tmpState = new StateType();
         stMemb.setState(tmpState);
         tmpState.setId(stateId);
-        StringOrRefType sort = new StringOrRefType();
-        sort.setValue(roomName);
-        tmpState.setDescription(sort);
-        // ------GEOMETRY
-        tmpState.setGeometry(statePosition);
-        // ------CONNECTS
-        TransitionPropertyType tmpTransProp;
-        if(null != connectedTransitions) {
-            for (TransitionType tmpTransition : connectedTransitions) {
-                if (null != tmpTransition) {
-                    tmpTransProp = new TransitionPropertyType();
-                    tmpTransProp.setTransition(tmpTransition);
-                    // IT IS POSSIBLE TO ADD AS A REFERENCE THE ID OF THE TRANSITION BUT IT WILL BE PUT INSIDE THE TRANSITION ITSELF AND NOT AS ATTRIBUTE!
-                    // PriorityLocationPropertyType loc = new PriorityLocationPropertyType();
-                    // loc.setHref("#T510");
-                    // tmpTrans.setLocation(_gmlObjectFactory.createPriorityLocation(loc));
-                    tmpState.getConnects().add(tmpTransProp);
-                }
-            }
+        if(null != name) {
+            StringOrRefType sort = new StringOrRefType();
+            sort.setValue(name);
+            tmpState.setDescription(sort);
         }
+        CodeType roomNameCT = new CodeType();
+        roomNameCT.setValue(name);
+        tmpState.getName().add(roomNameCT);// TODO add the room name
+        // XXX Added parameters that are not in the standard definition (1.0)
+        tmpState.setIsAnchorNode(isAnchorNode);
+        tmpState.setIsDoor(isDoor);
+        // ------GEOMETRY
+        tmpState.setGeometry(position);
+        
+        
+        // ------CONNECTS
+        // I'll save here the reference, the edge function will add references of transitions
+        stateTransitionsReferences.put(stateId, tmpState.getConnects());
+        
         return stMemb;
     }
+   
     
     // Builders
     private static SpaceLayerType spaceLayerTypeBuilder(String id, NodesType nodesType, EdgesType edgesType) {
@@ -247,8 +264,10 @@ public class OSMConverter {
 
                     // Add references of the transaction to the involved States
                     for(Node state : new Node[] {start, end}) {
-                        transitionReferences.get(state.get("name")).add(
-                                newTransitionTypeReference(id));
+                        
+                        TransitionPropertyType transitionLink = new TransitionPropertyType();
+                        transitionLink.setHref(newTransitionTypeReferenceString(id));
+                        stateTransitionsReferences.get(state.get("name")).add(transitionLink);
                     }
                     
                     // add reference of the transition to start and end TODO
