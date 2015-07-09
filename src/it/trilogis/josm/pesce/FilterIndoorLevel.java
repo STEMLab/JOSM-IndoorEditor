@@ -70,7 +70,7 @@ public class FilterIndoorLevel {
             isInGraph = new IsMember(graph);
         }
       
-        try
+        //try
         {
             PescePlugin.ds.beginUpdate();
             final Collection<OsmPrimitive> all = PescePlugin.ds.allNonDeletedCompletePrimitives();
@@ -101,7 +101,7 @@ public class FilterIndoorLevel {
             // TODO: de-select hidden primitives: ds.clearSelection(Collection<OsmPrimitive>);
             PescePlugin.ds.clearSelection(deselect);
         } 
-        finally 
+        //finally 
         {
             PescePlugin.ds.endUpdate();
             Main.debug("changed="+changed);

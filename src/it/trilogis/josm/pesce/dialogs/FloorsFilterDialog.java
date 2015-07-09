@@ -109,7 +109,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     
     // Edit mode
     private LayerType layerType = LayerType.IGML; // TODO: save this value for each level
-    private SideButton modeButton;
+    private SideButton modeButton = null;
     private Map<DataSet,LayerType> dsToType = null;
    
     //final static private Set<String> specialFloors = new HashSet<>(Arrays.asList(new String[]{ TREELABELALL }));
@@ -120,7 +120,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     private TreePath[] sp; // selected paths
     
     // WORKAROUND
-    private long __events_to_ignore;
+//    private long __events_to_ignore;
 
     /**
      * Constructs a new {@code FilterDialog}
@@ -129,7 +129,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         super(tr("Indoor features"), "floors", tr("Fiter levels and graphs. Communication to the i-locate server."), null, 162);
         
         // WORKAROUND
-        __events_to_ignore = 0;
+//        __events_to_ignore = 0;
         
         if(null != INSTANCE) {
             Main.error("[FloorsFilterDialog.FloorsFilterDialog] Only one instance is allowed");
@@ -281,7 +281,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 //            if (changed)
 //                repaint();
         }
-        Main.debug(">>>>>>>>>>>>>>>> "+floors.size());
+        Main.debug("[...] Number of floors: "+floors.size());
         //fu1.add(new FloorMutableTreeNode("eee", false));
         //fu1.add(new FloorMutableTreeNode("rrr", false));
         
@@ -577,7 +577,11 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 public void actionPerformed(ActionEvent e) {
                     String name = JOptionPane.showInputDialog("Enter the layer name");
                     if(null != name) {
-                        // TODO implement
+                        if (name.isEmpty()) {
+                            name = OsmDataLayer.createNewName();
+                        }
+                        OsmDataLayer layer = new OsmDataLayer(new DataSet(), name, null);
+                        Main.main.addLayer(layer); // null -> computeBbox(bounds)
                     }
                 }
 
@@ -658,7 +662,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
              
              this.add(buttonRowPanel,BorderLayout.SOUTH);
 
-        
+             //setIndoorgmlEditMode();
              
              treeGraphs.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
 
@@ -768,14 +772,18 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     
     // Edit mode manipulation
     public void setBuildingsEditMode() {
-        modeButton.getAction().putValue(Action.NAME, BUILDINLABEL);
-        setLayerType(LayerType.BUILDING);
+        if(null != modeButton && null != modeButton.getAction()) {
+            modeButton.getAction().putValue(Action.NAME, BUILDINLABEL);
+            setLayerType(LayerType.BUILDING);
+        }
     }
 
 
     public void setIndoorgmlEditMode() {
-        modeButton.getAction().putValue(Action.NAME, IGMLLABEL);
-        setLayerType(LayerType.IGML);
+        if(null != modeButton && null != modeButton.getAction()) {
+            modeButton.getAction().putValue(Action.NAME, IGMLLABEL);
+            setLayerType(LayerType.IGML);
+        }
     }
     /////////////////////////
 
@@ -838,95 +846,106 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             
             for(AbstractDatasetChangedEvent e : events) {
                 type = e.getType();
-                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Son type: "+type);
+
                 
                 // WORKAROUND
-                if(__events_to_ignore >0) {
-                    
-                    __events_to_ignore--;
-                    if(type != DatasetEventType.PRIMITIVES_ADDED) {
-                        Main.debug("\t\tWORKAROUND: ignore this event. type: "+type+" __: "+__events_to_ignore);
-                        return;
-                    } else {
-                        Main.debug("\t\tWORKAROUND: don't skip this because of type. "+__events_to_ignore);
-                    }
-                }
+//                if(__events_to_ignore >0) {
+//                    
+//                    __events_to_ignore--;
+//                    if(type != DatasetEventType.PRIMITIVES_ADDED && type != DatasetEventType.RELATION_MEMBERS_CHANGED) {
+//                        Main.debug("\t\tWORKAROUND: ignore this event. type: "+type+" __: "+__events_to_ignore);
+//                        return;
+//                    } else {
+//                        Main.debug("\t\tWORKAROUND: don't skip this because of type. "+__events_to_ignore);
+//                    }
+//                }
+                
+                Collection<? extends OsmPrimitive> prim = e.getPrimitives();
+                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] size: "+prim.size());
                 
                 switch(type) {
                 case PRIMITIVES_ADDED:
+//                  long __add_to_ignore = 0;
+                    for(OsmPrimitive p : prim) {
+                        Main.debug("[FloorsFilterDialog.dataChangedOrAdded] p: "+p.getName()+" "+p.getPrimitiveId()+" type: "+type);
+                        
+                        if(p instanceof Relation) {
+                            // New graph, refresh treeGraph
+                            // FIXME: this deselect the graph
+                            // I could preserve selection in rebuild
+                            //build(false);
+                        } else {
+                            
+                            // Only in IndoorGML mode I'll manage graphs
+                            if(getLayerType() == LayerType.IGML) {
+                                // Node or Way
+                                Relation graph = getActiveGraph();
+                                
+                                int level = getCurrentLevel();
+                                
+                                // Check if the graph is selected 
+                                if(null == graph || !isDefinedLevel(level)) {
+                                    PescePlugin.ds.removePrimitive(p); // Wrong way to do this
+                                    JOptionPane.showMessageDialog(null,"You must select a graph and a level");
+                                    return;
+                                } else {
+                                    Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Active graph: "+graph.getPrimitiveId().getUniqueId());
+                                    // TODO: add the node/transition to level
+                                    
+                                    // Add the node/transition to the graph
+                                    if (p instanceof Node) {
+                                        addToGraph((Node) p, graph);
+                                    } else if (p instanceof Way) {
+                                        addToGraph((Way) p, graph);
+                                    } else {
+                                        //BUG
+                                    }
+//                                    Main.debug("[FloorsFilterDialog.dataChangedOrAdded] __events_to_ignore: "+__add_to_ignore+"++");
+//                                    __add_to_ignore++;
+                                    addToLevel(p, level);
+                                }
+                            } else {
+                                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Buildings mode. Do nothing");
+                            }
+                            
+                            // This is a sort of debug
+                            p.put("name", String.valueOf(p.getPrimitiveId().getUniqueId()));
+                        }
+                    }
                     break;
-                case CHANGESET_ID_CHANGED:
-                    break;
-                case DATA_CHANGED:
-                    break;
-                case NODE_MOVED:
-                    break;
-                case PRIMITIVES_REMOVED:
-                    break;
-                case RELATION_MEMBERS_CHANGED:
-                    break;
-                case TAGS_CHANGED:
-                    break;
-                case WAY_NODES_CHANGED:
-                    break;
+//                case CHANGESET_ID_CHANGED:
+//                    break;
+//                case DATA_CHANGED:
+//                    break;
+//                case NODE_MOVED:
+//                    break;
+//                case PRIMITIVES_REMOVED:
+//                    break;
+//                case RELATION_MEMBERS_CHANGED:
+//                    break;
+//                case TAGS_CHANGED:
+//                    break;
+//                case WAY_NODES_CHANGED:
+//                    break;
                 default:
                     Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Change type ("+type+") not managed");
+                    
+                    Main.debug("[FloorsFilterDialog.dataChangedOrAdded] #primitives "+e.getPrimitives().size());
+                    int i=0;
+                    for(OsmPrimitive p : e.getPrimitives()) {
+                        if(i++>3) break;
+                        Main.debug("[FloorsFilterDialog.dataChangedOrAdded] "+i+" p type: "+(p instanceof Node ? "Node" : (p instanceof Way ? "Way" : "Relation")));
+                        Main.debug("[FloorsFilterDialog.dataChangedOrAdded] "+i+" p id: "+p.getPrimitiveId().getUniqueId());
+                    }
                     return;
                 }
                 
                 
-                Collection<? extends OsmPrimitive> prim = e.getPrimitives();
-                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] size: "+prim.size());
-                long __add_to_ignore = 0;
-                for(OsmPrimitive p : prim) {
-                    Main.debug("[FloorsFilterDialog.dataChangedOrAdded] p: "+p.getName()+" "+p.getPrimitiveId()+" type: "+type);
-                    
-                    if(p instanceof Relation) {
-                        // New graph, refresh treeGraph
-                        // FIXME: this deselect the graph
-                        // I could preserve selection in rebuild
-                        //build(false);
-                    } else {
-                        
-                        // Only in IndoorGML mode I'll manage graphs
-                        if(getLayerType() == LayerType.IGML) {
-                            // Node or Way
-                            Relation graph = getActiveGraph();
-                            
-                            int level = getCurrentLevel();
-                            
-                            // Check if the graph is selected 
-                            if(null == graph || !isDefinedLevel(level)) {
-                                PescePlugin.ds.removePrimitive(p); // Wrong way to do this
-                                JOptionPane.showMessageDialog(null,"You must select a graph and a level");
-                                return;
-                            } else {
-                                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Active graph: "+graph.getPrimitiveId().getUniqueId());
-                                // TODO: add the node/transition to level
-                                
-                                // Add the node/transition to the graph
-                                if (p instanceof Node) {
-                                    addToGraph((Node) p, graph);
-                                } else if (p instanceof Way) {
-                                    addToGraph((Way) p, graph);
-                                } else {
-                                    //BUG
-                                }
-                                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] __events_to_ignore: "+__add_to_ignore+"++");
-                                __add_to_ignore++;
-                                addToLevel(p, level);
-                            }
-                        } else {
-                            Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Buildings mode. Do nothing");
-                        }
-                        
-                        // This is a sort of debug
-                        p.put("name", String.valueOf(p.getPrimitiveId().getUniqueId()));
-                    }
-                }
+                
+
                 // Add max 1 to events to ignore
-                if(__add_to_ignore>0)
-                    __events_to_ignore ++; 
+//                if(__add_to_ignore>0)
+//                    __events_to_ignore ++; 
             }
         }
     }
@@ -1041,12 +1060,21 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     // TODO: move from here
     public void addToGraph(Node n, Relation g) {
         if(!g.getMemberPrimitives().contains(n)) {
+            Main.debug("> Add node to relation");
             g.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_STATE, n));
+            // WORKAROUND2: Add to the graph the ways linked to the node
+            for(OsmPrimitive p : n.getReferrers(false)) {
+                if(p instanceof Way) {
+                    Main.debug("> I found a related way");
+                    addToGraph((Way)p, g);
+                }
+            }
         }
     }
     // TODO: move from here
     public void addToGraph(Way t, Relation g) {
         if(!g.getMemberPrimitives().contains(t)) { 
+            Main.debug("> Add way to relation");
             g.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, t));
         }
     }
