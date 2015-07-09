@@ -548,12 +548,14 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                         // TODO: check null pointer exception?
                         DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGraphs.getModel().getRoot();
                         
-                        Relation relation = new Relation();
-                        relation.put("name", name); // TODO: inser all Indoor graph here. TODO TODO: Create a newIndoorGraph somewhere 
-                        PescePlugin.ds.addPrimitive(relation);
+                        Relation graph = new Relation();
+                        graph.put("name", name); // TODO: inser all Indoor graph here. TODO TODO: Create a newIndoorGraph somewhere
+                        graph.put("type", Constants.OSM_RELATION_TYPE_SPACELAYER); 
+                        PescePlugin.ds.addPrimitive(graph);
                         
-                        rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(relation.getPrimitiveId(), relation.getName())));
-                           
+                        rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(graph.getPrimitiveId(), graph.getName())));
+                        // Refresh the gui
+                        build(false);
                     }
                 }
 
@@ -791,7 +793,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     // RELATION_MEMBERS_CHANGED, TAGS_CHANGED, WAY_NODES_CHANGED, CHANGESET_ID_CHANGED}
     
     private void dataChangedOrAdded(AbstractDatasetChangedEvent event) {
-        Main.debug("\t\tA dataChangedOrAdded "+event.getDataset());
+        Main.debug("\n\n\n\t\tA dataChangedOrAdded "+event.getDataset());
         DatasetEventType type;
         
         if(event.getType() == DatasetEventType.PRIMITIVES_ADDED &&  ((PrimitivesAddedEvent)event).wasIncomplete()) {
@@ -799,16 +801,12 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             return;
         }
         
-        // Is dataSet changed? Josm whips it's datasets back and forth.
+        // Josm whips it's datasets back and forth.
         DataSet newDs = event.getDataset();
         if(newDs != PescePlugin.ds) {
             Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Update the dataSet");
             PescePlugin.ds = newDs;
-            // Fire a lot of things here!!!
-//            tree = null;
-//            treeGraphs = null;
             build(true);
-            //INSTANCE.repaint();
         } else {
             type = event.getType();
             // The DataSet is ok, what did it change?
@@ -833,6 +831,30 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             for(AbstractDatasetChangedEvent e : events) {
                 type = e.getType();
                 Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Son type: "+type);
+                
+                switch(type) {
+                case PRIMITIVES_ADDED:
+                    break;
+                case CHANGESET_ID_CHANGED:
+                    break;
+                case DATA_CHANGED:
+                    break;
+                case NODE_MOVED:
+                    break;
+                case PRIMITIVES_REMOVED:
+                    break;
+                case RELATION_MEMBERS_CHANGED:
+                    break;
+                case TAGS_CHANGED:
+                    break;
+                case WAY_NODES_CHANGED:
+                    break;
+                default:
+                    Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Change type ("+type+") not managed");
+                    return;
+                }
+                
+                
                 Collection<? extends OsmPrimitive> prim = e.getPrimitives();
                 Main.debug("[FloorsFilterDialog.dataChangedOrAdded] size: "+prim.size());
                 for(OsmPrimitive p : prim) {
@@ -840,7 +862,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                     
                     if(p instanceof Relation) {
                         // New graph, refresh treeGraph
-                        build(false);
+                        // FIXME: this deselect the graph
+                        // I could preserve selection in rebuild
+                        //build(false);
                     } else {
                         
                         // Only in IndoorGML mode I'll manage graphs
@@ -853,7 +877,19 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                                 PescePlugin.ds.removePrimitive(p); // Wrong way to do this
                                 JOptionPane.showMessageDialog(null,"You must select a graph");
                                 return;
-                            }    
+                            } else {
+                                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Active graph: "+graph.getPrimitiveId().getUniqueId());
+                                // TODO: add the node/transition to level
+                                
+                                // Add the node/transition to the graph
+                                if (p instanceof Node) {
+                                    addToGraph((Node) p, graph); // Deselect element into graph
+                                } else if (p instanceof Way) {
+                                    addToGraph((Way) p, graph); // Endless loop
+                                } else {
+                                    //BUG
+                                }
+                            }
                         } else {
                             Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Buildings mode. Do nothing");
                         }
@@ -892,10 +928,27 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             // An element is selected, but it is not a graph
             return null;
         }
-        PrimitiveUserObject userObj = (PrimitiveUserObject)((DefaultMutableTreeNode) selected.getLastPathComponent()).getUserObject();
+        PrimitiveUserObject userObj = (PrimitiveUserObject) ((DefaultMutableTreeNode) selected.getLastPathComponent()).getUserObject();
         return (Relation) PescePlugin.ds.getPrimitiveById(userObj.id);
     }
     
+    public int getCurrentLevel() {
+        TreePath selected = tree.getSelectionPath();
+        if(0 == tree.getSelectionCount() || 2 != selected.getPathCount()) {
+            return Constants.MISSEDLEVEL;
+        }
+        
+        return stringToLevel((String) selected.getLastPathComponent());
+    }
+    
+    private String levelToString(int level) {
+        // TODO: implement
+        return null;
+    }
+    private int stringToLevel(String level) {
+        // FIXME: Properly decode floors
+        return Integer.parseInt(level);
+    }
     
     @Override
     public void nodeMoved(NodeMovedEvent event) {
@@ -937,6 +990,16 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         Main.debug("\t\tf wayNodesChanged");
     }
 
+    // TODO: move from here
+    public void addToGraph(Node n, Relation g) {
+        g.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_STATE, n));
+
+    }
+    // TODO: move from here
+    public void addToGraph(Way t, Relation g) {
+        g.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, t));
+    }
+    
     static private class FloorMutableTreeNode extends DefaultMutableTreeNode implements Comparable<FloorMutableTreeNode> {
 
         static private boolean isNumber(String s) {
