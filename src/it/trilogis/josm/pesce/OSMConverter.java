@@ -71,7 +71,7 @@ public class OSMConverter {
         
        
         
-        print(String.valueOf(relations.size()));
+        print("Number of relations (spaceLayerType): "+String.valueOf(relations.size()));
         for(Relation relation : relations) {
             if(relation.hasKey("type") && relation.hasKey("name") && relation.get("type").equals(Constants.OSM_RELATION_TYPE_SPACELAYER)) {
                 SpaceLayerMemberType member = new SpaceLayerMemberType();
@@ -79,6 +79,8 @@ public class OSMConverter {
                 // This id has to come from the relation: should I put both nodes and edges into the relationship? Yes
                 member.setSpaceLayer(spaceLayerTypeBuilder(relation.get("name"), nodes(relation), edges(relation)));   
                 print(relation.get("name"));     
+            } else {
+                System.err.println("This relation "+relation.getName()+" is not a valid spaceLayerType");
             }
         }
         
@@ -100,12 +102,16 @@ public class OSMConverter {
             if(member.getRole().equals(Constants.OSM_RELATION_ROLE_STATE)) {
                 Node n = member.getNode();
                 
-                StateMemberType stateMemberType;    
+                StateMemberType stateMemberType;
                 String stateId;
                 if(n.getKeys().containsKey("name")) {
                     stateId = n.get("name");
                 } else {
-                   throw new ConversionException("State name not defined");
+                    stateId = idsFactory.newId("Sjosm");
+                   //throw new ConversionException("State name not defined"); // I could invent unique names (using the osm primitive id. e.g. -43 -> Sm43josm)
+                }
+                if(null == n.get(Constants.OSM_KEY_LEVEL)){
+                    throw new ConversionException("The state "+stateId+" does not have a level ("+Constants.OSM_KEY_LEVEL+")");
                 }
 
                 LatLon coor = n.getCoor();
@@ -230,7 +236,11 @@ public class OSMConverter {
                             new double[] { 
                         Double.parseDouble(start.get(Constants.OSM_KEY_LEVEL)),
                         Double.parseDouble(end.get(Constants.OSM_KEY_LEVEL)) });
-                    String id = w.get("name")!=null ? w.get("name") : idsFactory.newId("nT"); 
+                    String id = w.get("name")!=null ? w.get("name") : idsFactory.newId("nT");
+                    // If 1 way is mapped to more transition I need mode ids from a name
+                    if(w.get("name")!=null && w.getNodes().size() > 2) {
+                        id = idsFactory.newId(id);
+                    }
                     edgesType.getTransitionMember().add(newTransitionMember(_gmlObjectFactory, 
                             id, 
                             1d, tmpTransitionLine, tStates));
@@ -242,7 +252,8 @@ public class OSMConverter {
                     }
                     
                     // add reference of the transition to start and end TODO
-                    start = end;
+                    // start = end;
+                    // (What I was saying here??)
                 }
             }
         }
