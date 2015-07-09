@@ -24,7 +24,6 @@ import org.openstreetmap.josm.data.osm.Way;
 
 import net.opengis.gml.v_3_2_1.AbstractCurveType;
 import net.opengis.indoorgml.v_1_0.core.*;
-
 import static it.trilogis.josm.pesce.UtilsFromPython.*;
 
 public class IGMLConverter {
@@ -134,7 +133,7 @@ public class IGMLConverter {
                     // Node type can be used only inside JOSM
                     Node josmNode = new Node(new LatLon(position.get(0), position.get(1)));
                     josmNode.put("name", state.getId());
-                    josmNode.put(Constants.OSM_KEY_LEVEL, ""+position.get(2).intValue());
+                    josmNode.put(Constants.OSM_KEY_LEVEL, String.valueOf(position.get(2).intValue()));
                     nodes.put(state.getId(), josmNode);
                     data.addPrimitive(josmNode);
                     spaceLayerRelation.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_STATE, josmNode));
@@ -149,7 +148,7 @@ public class IGMLConverter {
         System.out.println(msg);
         int i = 0;
         for(List<String> path : paths) {
-            printPath(path, ""+i++);
+            printPath(path, String.valueOf(i++));
         }
     }
     private void printPath(List<String> path, String comment) {

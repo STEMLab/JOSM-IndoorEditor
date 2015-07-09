@@ -11,7 +11,7 @@ public class UtilsFromPython {
     public static String strip(String s, String chars) {
         HashSet<String> chrs = new HashSet<>();
         for(char c : chars.toCharArray()) {
-            chrs.add(""+c);
+            chrs.add(String.valueOf(c));
         }
         while(chrs.contains(s.substring(0, 1))) {
             s = s.substring(1);

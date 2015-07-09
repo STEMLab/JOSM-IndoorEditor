@@ -118,12 +118,18 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     
 
     private TreePath[] sp; // selected paths
+    
+    // WORKAROUND
+    private long __events_to_ignore;
 
     /**
      * Constructs a new {@code FilterDialog}
      */
     public FloorsFilterDialog() {
         super(tr("Indoor features"), "floors", tr("Fiter levels and graphs. Communication to the i-locate server."), null, 162);
+        
+        // WORKAROUND
+        __events_to_ignore = 0;
         
         if(null != INSTANCE) {
             Main.error("[FloorsFilterDialog.FloorsFilterDialog] Only one instance is allowed");
@@ -250,12 +256,12 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 FloorMutableTreeNode floor = floors.get(primitiveLevel);
                 if (null == floor) {
                     Main.debug("Create a floor: "+primitiveLevel);
-                    floors.put(primitiveLevel, floor = new FloorMutableTreeNode(Constants.MISSEDLEVEL == primitiveLevel ? Constants.MISSEDLEVELJTREEREP : ""+primitiveLevel));
+                    floors.put(primitiveLevel, floor = new FloorMutableTreeNode(Constants.MISSEDLEVEL == primitiveLevel ? Constants.MISSEDLEVEL_STRING : String.valueOf(primitiveLevel)));
                     treeModel.insertNodeInto(floor, root, root.getChildCount());
                     Main.debug("Add to root floor "+floor+" (label)");
                 }
                 String name = primitive.getName();
-                floor.add(new FloorMutableTreeNode(new PrimitiveUserObject(primitive.getPrimitiveId(), name==null ? ""+primitive.getPrimitiveId() : name), false));
+                floor.add(new FloorMutableTreeNode(new PrimitiveUserObject(primitive.getPrimitiveId(), name==null ? String.valueOf(primitive.getPrimitiveId()) : name), false));
             }
             
             Main.debug("[...addNodes] Feature level 0: "+nodesLevelsCount[0]+" Feature level 1: "+nodesLevelsCount[1]);
@@ -366,7 +372,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                     if (FloorsFilterDialog.TREELABELALL.equals(floorLabel)) {
                         // Do not filter levels
                         level = Constants.ALLLEVELS;
-                    } else if(Constants.MISSEDLEVELJTREEREP.equals(floorLabel)) {
+                    } else if(Constants.MISSEDLEVEL_STRING.equals(floorLabel)) {
                         level = Constants.MISSEDLEVEL;
                     } else {
                         level = Integer.parseInt(floorLabel);
@@ -794,9 +800,11 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     
     private void dataChangedOrAdded(AbstractDatasetChangedEvent event) {
         Main.debug("\n\n\n\t\tA dataChangedOrAdded "+event.getDataset());
-        DatasetEventType type;
+        DatasetEventType type = event.getType();
         
-        if(event.getType() == DatasetEventType.PRIMITIVES_ADDED &&  ((PrimitivesAddedEvent)event).wasIncomplete()) {
+
+        
+        if(type == DatasetEventType.PRIMITIVES_ADDED &&  ((PrimitivesAddedEvent)event).wasIncomplete()) {
             Main.debug("\t\tc incompletePrimitivesAdded");
             return;
         }
@@ -832,6 +840,18 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 type = e.getType();
                 Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Son type: "+type);
                 
+                // WORKAROUND
+                if(__events_to_ignore >0) {
+                    
+                    __events_to_ignore--;
+                    if(type != DatasetEventType.PRIMITIVES_ADDED) {
+                        Main.debug("\t\tWORKAROUND: ignore this event. type: "+type+" __: "+__events_to_ignore);
+                        return;
+                    } else {
+                        Main.debug("\t\tWORKAROUND: don't skip this because of type. "+__events_to_ignore);
+                    }
+                }
+                
                 switch(type) {
                 case PRIMITIVES_ADDED:
                     break;
@@ -857,6 +877,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 
                 Collection<? extends OsmPrimitive> prim = e.getPrimitives();
                 Main.debug("[FloorsFilterDialog.dataChangedOrAdded] size: "+prim.size());
+                long __add_to_ignore = 0;
                 for(OsmPrimitive p : prim) {
                     Main.debug("[FloorsFilterDialog.dataChangedOrAdded] p: "+p.getName()+" "+p.getPrimitiveId()+" type: "+type);
                     
@@ -872,10 +893,12 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                             // Node or Way
                             Relation graph = getActiveGraph();
                             
+                            int level = getCurrentLevel();
+                            
                             // Check if the graph is selected 
-                            if(null == graph) {
+                            if(null == graph || !isDefinedLevel(level)) {
                                 PescePlugin.ds.removePrimitive(p); // Wrong way to do this
-                                JOptionPane.showMessageDialog(null,"You must select a graph");
+                                JOptionPane.showMessageDialog(null,"You must select a graph and a level");
                                 return;
                             } else {
                                 Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Active graph: "+graph.getPrimitiveId().getUniqueId());
@@ -883,21 +906,27 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                                 
                                 // Add the node/transition to the graph
                                 if (p instanceof Node) {
-                                    addToGraph((Node) p, graph); // Deselect element into graph
+                                    addToGraph((Node) p, graph);
                                 } else if (p instanceof Way) {
-                                    addToGraph((Way) p, graph); // Endless loop
+                                    addToGraph((Way) p, graph);
                                 } else {
                                     //BUG
                                 }
+                                Main.debug("[FloorsFilterDialog.dataChangedOrAdded] __events_to_ignore: "+__add_to_ignore+"++");
+                                __add_to_ignore++;
+                                addToLevel(p, level);
                             }
                         } else {
                             Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Buildings mode. Do nothing");
                         }
                         
                         // This is a sort of debug
-                        p.put("name", ""+p.getPrimitiveId().getUniqueId());
+                        p.put("name", String.valueOf(p.getPrimitiveId().getUniqueId()));
                     }
                 }
+                // Add max 1 to events to ignore
+                if(__add_to_ignore>0)
+                    __events_to_ignore ++; 
             }
         }
     }
@@ -937,16 +966,35 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         if(0 == tree.getSelectionCount() || 2 != selected.getPathCount()) {
             return Constants.MISSEDLEVEL;
         }
-        
-        return stringToLevel((String) selected.getLastPathComponent());
+        return stringToLevel((String)((FloorMutableTreeNode) selected.getLastPathComponent()).getUserObject());
+    }
+    
+    public boolean isDefinedLevel(int level) {
+        return level != Constants.ALLLEVELS && level != Constants.PREVIOUSLEVEL && level != Constants.MISSEDLEVEL;
     }
     
     private String levelToString(int level) {
-        // TODO: implement
-        return null;
+        switch(level) {
+        case Constants.ALLLEVELS:
+            return Constants.ALLLEVELS_STRING;
+        case Constants.PREVIOUSLEVEL:
+            return Constants.PREVIOUSLEVEL_STRING;
+        case Constants.MISSEDLEVEL:
+            return Constants.MISSEDLEVEL_STRING;
+        default:
+            return String.valueOf(level);
+        }
     }
     private int stringToLevel(String level) {
-        // FIXME: Properly decode floors
+        if(Constants.ALLLEVELS_STRING.equals(level)) {
+            return Constants.ALLLEVELS;
+        }
+        if(Constants.PREVIOUSLEVEL_STRING.equals(level)) {
+            return Constants.PREVIOUSLEVEL;
+        }
+        if(Constants.MISSEDLEVEL_STRING.equals(level)) {
+            return Constants.MISSEDLEVEL;
+        }
         return Integer.parseInt(level);
     }
     
@@ -992,12 +1040,19 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
     // TODO: move from here
     public void addToGraph(Node n, Relation g) {
-        g.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_STATE, n));
-
+        if(!g.getMemberPrimitives().contains(n)) {
+            g.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_STATE, n));
+        }
     }
     // TODO: move from here
     public void addToGraph(Way t, Relation g) {
-        g.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, t));
+        if(!g.getMemberPrimitives().contains(t)) { 
+            g.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, t));
+        }
+    }
+    
+    public void addToLevel(OsmPrimitive p, int level) {
+        p.put(Constants.OSM_KEY_LEVEL, String.valueOf(level));
     }
     
     static private class FloorMutableTreeNode extends DefaultMutableTreeNode implements Comparable<FloorMutableTreeNode> {

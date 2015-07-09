@@ -39,9 +39,14 @@ public class Constants {
     public static final String OSM_RELATION_ROLE_TRANSITION = "transition";
     public static final String OSM_KEY_LEVEL = "indoor:level";
     public static final String SRID4326 = "EPSG:4326";
-    public static final String MISSEDLEVELJTREEREP = "No level defined";
+    
+    
     public static final int ALLLEVELS = -1000000000;
+    public static final String ALLLEVELS_STRING = "All";
     public static final int PREVIOUSLEVEL = -1000000001;
+    public static final String PREVIOUSLEVEL_STRING = "Previous level";
     public static final int MISSEDLEVEL = -1000000002;
+    public static final String MISSEDLEVEL_STRING = "No level defined";
+    
     public static final boolean COMO = true;
 }

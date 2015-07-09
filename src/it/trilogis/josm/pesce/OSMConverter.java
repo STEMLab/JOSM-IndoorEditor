@@ -71,7 +71,7 @@ public class OSMConverter {
         
        
         
-        print(""+relations.size());
+        print(String.valueOf(relations.size()));
         for(Relation relation : relations) {
             if(relation.hasKey("type") && relation.hasKey("name") && relation.get("type").equals(Constants.OSM_RELATION_TYPE_SPACELAYER)) {
                 SpaceLayerMemberType member = new SpaceLayerMemberType();
