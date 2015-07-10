@@ -43,6 +43,7 @@ public class Constants {
     public static final String OSM_KEY_DOOR = "indoor:door";
     public static final String OSM_KEY_DESCRIPTION = "indoor:description";
     public static final String[] OSM_VALUES_TRUE = {"yes","true","1"};
+    public static final String OSM_VALUE_FALSE = "no";
 
     public static final String SRID4326 = "EPSG:4326";
     

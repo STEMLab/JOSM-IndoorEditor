@@ -3,7 +3,6 @@ package it.trilogis.josm.pesce.converters;
 import it.trilogis.josm.pesce.Constants;
 import it.trilogis.josm.pesce.IdsFactory;
 import it.trilogis.josm.pesce.UtilsFromPython;
-import it.trilogis.josm.pesce.TransactionIds.Tx;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,6 +126,10 @@ public class IGMLConverter {
                 if(null!=stateName) {
                     System.out.println("stateName: "+stateName);
                 }
+                boolean isAnchorNode = state.isIsAnchorNode();
+                boolean isDoor = state.isIsDoor();
+                // I don't read description
+                
                 // I'm assuming a lot of wrong things
                 List<Double> position = state.getGeometry().getPoint().getPos().getValue();
                 System.out.println(String.format(Locale.US, "%s %f %f", state.getId(), position.get(0), position.get(1)));
@@ -137,6 +140,8 @@ public class IGMLConverter {
                     Node josmNode = new Node(new LatLon(position.get(0), position.get(1)));
                     josmNode.put(Constants.OSM_KEY_ID, state.getId());
                     josmNode.put(Constants.OSM_KEY_LEVEL, String.valueOf(position.get(2).intValue()));
+                    josmNode.put(Constants.OSM_KEY_ANCHORNODE, isAnchorNode ? Constants.OSM_VALUES_TRUE[0] : Constants.OSM_VALUE_FALSE);
+                    josmNode.put(Constants.OSM_KEY_DOOR, isDoor ? Constants.OSM_VALUES_TRUE[0] : Constants.OSM_VALUE_FALSE);
                     nodes.put(state.getId(), josmNode);
                     data.addPrimitive(josmNode);
                     spaceLayerRelation.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_STATE, josmNode));

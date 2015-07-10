@@ -207,15 +207,19 @@ public class OSMConverter {
         stMemb.setState(tmpState);
         tmpState.setId(stateId);
         if(null == name) {
-            name = ""; // A description is needed. XXX: name goes into name and into description.
+            name = "";
         }
-        StringOrRefType sort = new StringOrRefType();
-        sort.setValue(name);
-        tmpState.setDescription(sort);
+
         CodeType roomNameCT = new CodeType();
         roomNameCT.setValue(name);
         tmpState.getName().add(roomNameCT);// TODO add the room name
         // XXX Added parameters that are not in the standard definition (1.0)
+        
+        // A description is needed. Set is to ""
+        StringOrRefType sort = new StringOrRefType();
+        sort.setValue("");
+        tmpState.setDescription(sort);
+        
         tmpState.setIsAnchorNode(isAnchorNode);
         tmpState.setIsDoor(isDoor);
         // ------GEOMETRY
@@ -340,9 +344,18 @@ public class OSMConverter {
             TransitionType tmpTrans = new TransitionType();
             trMemb.setTransition(tmpTrans);
             tmpTrans.setId(transitionId);
+            
+
+            // Set the tx id as Name
+            CodeType txNameCT = new CodeType();
+            txNameCT.setValue(transitionId);
+            tmpTrans.getName().add(txNameCT);
+            
+            // Set "" as description
             StringOrRefType sort = new StringOrRefType();
-            sort.setValue(transitionId);
+            sort.setValue("");
             tmpTrans.setDescription(sort);
+            
             tmpTrans.setWeight(weight);
             // ------GEOMETRY
             CurvePropertyType tmpGeom = new CurvePropertyType();
