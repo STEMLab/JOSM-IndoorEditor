@@ -1,6 +1,7 @@
 package it.trilogis.josm.pesce;
 
 import it.trilogis.josm.pesce.converters.IGMLConverter;
+import it.trilogis.josm.pesce.importexport.Marshalling;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

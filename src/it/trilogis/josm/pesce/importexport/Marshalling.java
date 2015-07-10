@@ -1,4 +1,4 @@
-package it.trilogis.josm.pesce;
+package it.trilogis.josm.pesce.importexport;
 
 import java.io.InputStream;
 import java.io.OutputStream;

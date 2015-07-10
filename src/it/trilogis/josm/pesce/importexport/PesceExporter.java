@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package it.trilogis.josm.pesce;
+package it.trilogis.josm.pesce.importexport;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 import it.trilogis.josm.pesce.converters.OSMConverter;

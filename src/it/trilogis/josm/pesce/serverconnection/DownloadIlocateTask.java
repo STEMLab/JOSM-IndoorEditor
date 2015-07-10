@@ -1,10 +1,10 @@
 package it.trilogis.josm.pesce.serverconnection;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
-import it.trilogis.josm.pesce.PesceImporter;
 import it.trilogis.josm.pesce.PescePlugin;
 import it.trilogis.josm.pesce.PescePlugin.LayerType;
 import it.trilogis.josm.pesce.PescePlugin.UploadInfo;
+import it.trilogis.josm.pesce.importexport.PesceImporter;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 
 import it.trilogis.josm.pesce.dialogs.FloorsFilterDialog;
+import it.trilogis.josm.pesce.importexport.PesceExporter;
+import it.trilogis.josm.pesce.importexport.PesceImporter;
 import it.trilogis.josm.pesce.serverconnection.IlocateImporter;
 
 import org.openstreetmap.josm.Main;
