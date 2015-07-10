@@ -15,11 +15,14 @@ public class IdsFactory {
     }
     
     public int newIntId(String type) {
+        return newIntId(type, FIRSTID);
+    }
+    public int newIntId(String type, int firstid) {
         int id;
         if(lastIds.containsKey(type)) {
             id = lastIds.get(type) + 1;
         } else {
-            id = FIRSTID;
+            id = firstid;
         }
         lastIds.put(type, id);
         return id;
@@ -27,6 +30,9 @@ public class IdsFactory {
     
     public String newId(String type) {
         return type + newIntId(type);
+    }
+    public String newId(String type, int firstid) {
+        return type + newIntId(type, firstid);
     }
     
     public String getLastId(String type) {

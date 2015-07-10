@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 
 import it.trilogis.josm.pesce.dialogs.FloorsFilterDialog;
+import it.trilogis.josm.pesce.importexport.GeoJsonPolygonsExporter;
 import it.trilogis.josm.pesce.importexport.PesceExporter;
 import it.trilogis.josm.pesce.importexport.PesceImporter;
 import it.trilogis.josm.pesce.serverconnection.IlocateImporter;
@@ -53,9 +54,11 @@ public class PescePlugin extends Plugin {
         
         FileImporter importer = new PesceImporter();
         FileExporter exporter = new PesceExporter();
+        FileExporter geoJsonPolygons = new GeoJsonPolygonsExporter();
         
         ExtensionFileFilter.importers.add(importer);
         ExtensionFileFilter.exporters.add(exporter);
+        ExtensionFileFilter.exporters.add(0,geoJsonPolygons);
 
 //        new RemoteControl().addRequestHandler(
 //                SetContextHandler.command,

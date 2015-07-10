@@ -124,13 +124,11 @@ public class OSMConverter {
                 
                 boolean isDoor = false, isAnchorNode = false;
                 
-                
                 String doorAttr = n.get(Constants.OSM_KEY_DOOR);
                 if(null != doorAttr) {
                     for(String yes : Constants.OSM_VALUES_TRUE) {
                         if(doorAttr.toLowerCase().equals(yes)){
                             isDoor = true;
-                            print("````````````````````````````````` ("+id+") isDoor = true;");
                             break;
                         }
                     }
@@ -141,14 +139,11 @@ public class OSMConverter {
                     for(String yes : Constants.OSM_VALUES_TRUE) {
                         if(anchorAttr.toLowerCase().equals(yes)){
                             isAnchorNode = true;
-                            print("````````````````````````````````` ("+id+") isAnchorNode = true;");
                             break;
                         }
                     }
                 }
                 LatLon coor = n.getCoor();
-                
-                print("````````````````````````````````` ("+id+") desc: "+n.get(Constants.OSM_KEY_DESCRIPTION));
                 
                 ////
 //                List<String> S1Transitions = new ArrayList<String>();
@@ -174,8 +169,8 @@ public class OSMConverter {
         return nodesType;
     }
     
-    public String newTransitionTypeReferenceString(String transitionID) {
-        return "#" + transitionID;
+    public String newReferenceString(String id) {
+        return "#" + id;
     }
     
    
@@ -278,9 +273,9 @@ public class OSMConverter {
                         continue;
                     }
                     
-                    List<StateType> tStates = new ArrayList<>();
-                    tStates.add(newStateTypeReference(start.get(Constants.OSM_KEY_ID)));
-                    tStates.add(newStateTypeReference(end.get(Constants.OSM_KEY_ID)));
+                    List<String> linkedStates = new ArrayList<>();
+                    linkedStates.add(start.get(Constants.OSM_KEY_ID));
+                    linkedStates.add(end.get(Constants.OSM_KEY_ID));
                     tmpTransitionLine = newLineStringProperty(_gmlObjectFactory, idsFactory.newId("nLS"), Constants.SRID4326, 
                             new double[] { start.getCoor().getX(), end.getCoor().getX() }, 
                             new double[] { start.getCoor().getY(), end.getCoor().getY() },
@@ -294,13 +289,13 @@ public class OSMConverter {
                     }
                     edgesType.getTransitionMember().add(newTransitionMember(_gmlObjectFactory, 
                             id, 
-                            1d, tmpTransitionLine, tStates));
+                            1d, tmpTransitionLine, linkedStates));
 
                     // Add references of the transaction to the involved States
                     for(Node state : new Node[] {start, end}) {
                         
                         TransitionPropertyType transitionLink = new TransitionPropertyType();
-                        transitionLink.setHref(newTransitionTypeReferenceString(id));
+                        transitionLink.setHref(newReferenceString(id));
                         stateTransitionsReferences.get(state.get(Constants.OSM_KEY_ID)).add(transitionLink);
                     }
                     
@@ -313,6 +308,7 @@ public class OSMConverter {
         return edgesType;
     }
     
+    @Deprecated
     public StateType newStateTypeReference(String stateID) {
         StateType st = new StateType();
         st.setId(stateID + "_" + idsFactory.newIntId("STATEREFERENCEID_SEQUENCE"));
@@ -337,7 +333,7 @@ public class OSMConverter {
     }
     
     public TransitionMemberType newTransitionMember(net.opengis.gml.v_3_2_1.ObjectFactory _gmlObjectFactory, String transitionId, double weight, LineStringType linestring,
-            List<StateType> connectedStates) {
+            List<String> connectedStatesIds) {
             TransitionMemberType trMemb = new TransitionMemberType();
             // -------TRANSITION TYPE
             TransitionType tmpTrans = new TransitionType();
@@ -362,10 +358,10 @@ public class OSMConverter {
             tmpTrans.setGeometry(tmpGeom);
             // ------CONNECTS
             StatePropertyType tmpStateProp;
-            for (StateType tmpState : connectedStates) {
-                if (null != tmpState) {
+            for (String stateId : connectedStatesIds) {
+                if (null != stateId) {
                     tmpStateProp = new StatePropertyType();
-                    tmpStateProp.setState(tmpState);
+                    tmpStateProp.setHref(newReferenceString(stateId));
                     tmpTrans.getConnects().add(tmpStateProp);
                 }
             }
