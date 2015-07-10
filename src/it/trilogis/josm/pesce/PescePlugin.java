@@ -55,9 +55,9 @@ public class PescePlugin extends Plugin {
         ExtensionFileFilter.importers.add(importer);
         ExtensionFileFilter.exporters.add(exporter);
 
-        new RemoteControl().addRequestHandler(
-                SetContextHandler.command,
-                SetContextHandler.class);
+//        new RemoteControl().addRequestHandler(
+//                SetContextHandler.command,
+//                SetContextHandler.class);
         
         new RemoteControl().addRequestHandler(
                 IlocateImporter.command,

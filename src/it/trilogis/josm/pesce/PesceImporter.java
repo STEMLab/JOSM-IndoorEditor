@@ -2,6 +2,7 @@ package it.trilogis.josm.pesce;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 import it.trilogis.josm.pesce.SetContextHandler.Context;
+import it.trilogis.josm.pesce.converters.IGMLConverter;
 
 import java.io.File;
 import java.io.FileInputStream;

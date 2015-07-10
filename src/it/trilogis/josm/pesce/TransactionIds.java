@@ -17,7 +17,7 @@ public class TransactionIds implements Map<TransactionIds.Tx, String> {
 
     private static Map<DataSet,TransactionIds> instances = null;
     
-    static class Tx {
+    public static class Tx {
         public String start, end;
         
         @Override

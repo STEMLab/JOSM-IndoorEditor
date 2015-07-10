@@ -1,5 +1,8 @@
-package it.trilogis.josm.pesce;
+package it.trilogis.josm.pesce.converters;
 
+import it.trilogis.josm.pesce.Constants;
+import it.trilogis.josm.pesce.IdsFactory;
+import it.trilogis.josm.pesce.UtilsFromPython;
 import it.trilogis.josm.pesce.TransactionIds.Tx;
 
 import java.util.ArrayList;
@@ -84,7 +87,7 @@ public class IGMLConverter {
                 
                 // TODO: create a Relation with this name
                 Relation spaceLayerRelation = new Relation();
-                spaceLayerRelation.put("name", spaceLayerType.getId());
+                spaceLayerRelation.put(Constants.OSM_KEY_ID, spaceLayerType.getId());
                 spaceLayerRelation.put("type", Constants.OSM_RELATION_TYPE_SPACELAYER); // FIXME
                 
                 System.out.println("Nodes of layer " + spaceLayerType.getId() + " -->");
@@ -132,7 +135,7 @@ public class IGMLConverter {
                 } else {
                     // Node type can be used only inside JOSM
                     Node josmNode = new Node(new LatLon(position.get(0), position.get(1)));
-                    josmNode.put("name", state.getId());
+                    josmNode.put(Constants.OSM_KEY_ID, state.getId());
                     josmNode.put(Constants.OSM_KEY_LEVEL, String.valueOf(position.get(2).intValue()));
                     nodes.put(state.getId(), josmNode);
                     data.addPrimitive(josmNode);
@@ -274,7 +277,7 @@ public class IGMLConverter {
             w.addNode(nodes.get(id));
         }
         if(null!=gmlId) {
-            w.put("name",gmlId);
+            w.put(Constants.OSM_KEY_ID,gmlId);
         }
         data.addPrimitive(w);
         spaceLayerRelation.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, w));

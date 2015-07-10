@@ -2,7 +2,8 @@
 package it.trilogis.josm.pesce;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
-import it.trilogis.josm.pesce.OSMConverter.ConversionException;
+import it.trilogis.josm.pesce.converters.OSMConverter;
+import it.trilogis.josm.pesce.converters.OSMConverter.ConversionException;
 
 import java.io.File;
 import java.io.FileNotFoundException;

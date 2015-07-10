@@ -37,7 +37,13 @@ public class Constants {
     public static final String OSM_RELATION_TYPE_SPACELAYER = "indoorgml:SpaceLayer";
     public static final String OSM_RELATION_ROLE_STATE = "state";
     public static final String OSM_RELATION_ROLE_TRANSITION = "transition";
+    public static final String OSM_KEY_ID = "name"; // WARNING: NOT USED (EVERYWHERE) YET
     public static final String OSM_KEY_LEVEL = "indoor:level";
+    public static final String OSM_KEY_ANCHORNODE = "indoor:anchornode";
+    public static final String OSM_KEY_DOOR = "indoor:door";
+    public static final String OSM_KEY_DESCRIPTION = "indoor:description";
+    public static final String[] OSM_VALUES_TRUE = {"yes","true","1"};
+
     public static final String SRID4326 = "EPSG:4326";
     
     
