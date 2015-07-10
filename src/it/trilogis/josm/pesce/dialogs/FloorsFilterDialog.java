@@ -404,7 +404,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 }
             });
 
-            SideButton uploadButton = new SideButton(new AbstractAction() {
+            SideButton uploadButton = Constants.COMO ? null : new SideButton(new AbstractAction() {
                 {
                     putValue(NAME, tr("Upload"));
                     putValue(SHORT_DESCRIPTION, tr("Upload all layers to {0}", "i-locate"));
@@ -655,7 +655,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                      ? new FlowLayout(FlowLayout.LEFT) : new GridLayout(1, 2));
 
              buttonRowPanel.add(modeButton);
-             buttonRowPanel.add(uploadButton);
+             if(!Constants.COMO) {
+                 buttonRowPanel.add(uploadButton);
+             }
              buttonRowPanel.add(linkButton);
              buttonRowPanel.add(newGraphButton);
              buttonRowPanel.add(newLayerButton);
