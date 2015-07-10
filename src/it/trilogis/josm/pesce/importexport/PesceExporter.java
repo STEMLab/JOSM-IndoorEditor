@@ -2,6 +2,7 @@
 package it.trilogis.josm.pesce.importexport;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
+import it.trilogis.ingoorgml.utils.IndoorGMLNamespaceMapper;
 import it.trilogis.josm.pesce.converters.OSMConverter;
 import it.trilogis.josm.pesce.converters.OSMConverter.ConversionException;
 
@@ -20,6 +21,7 @@ import javax.swing.JOptionPane;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.PropertyException;
 
 import net.opengis.gml.v_3_2_1.FeatureCollectionType;
 import net.opengis.indoorgml.v_1_0.core.IndoorFeaturesType;
@@ -151,15 +153,29 @@ public class PesceExporter extends FileExporter {
             document = OSMConverter.convert(data);
             if(null != file) {
                 try(OutputStream os = getOutputStream(file)){
-                    Marshalling.marshal(document, os);
+                    
+                    
+                    JAXBContext jaxbContext = JAXBContext.newInstance(IndoorFeaturesType.class);
+                    Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+                    try {
+                        jaxbMarshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new IndoorGMLNamespaceMapper());
+                    } catch (PropertyException e) {
+                        // In case another JAXB implementation is used
+                        e.printStackTrace();
+                    }
+                    // output pretty printed
+                    jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+                    jaxbMarshaller.marshal(document, os);
+                    
+                    //Marshalling.marshal(document, os);
                     os.close();
                 }
             } else if(null != writer) {
                 Marshalling.marshal(document, writer);
             }
-        } catch (ConversionException e) {
+        } catch (ConversionException | JAXBException e) {
             e.printStackTrace();
-        }
+        } 
     }
     
     public static void doSave(Writer writer, DataSet data) throws IOException, FileNotFoundException  {
