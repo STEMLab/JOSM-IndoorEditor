@@ -304,9 +304,8 @@ public class OSMConverter {
                         stateTransitionsReferences.get(state.get(Constants.OSM_KEY_ID)).add(transitionLink);
                     }
                     
-                    // add reference of the transition to start and end TODO
-                    // start = end;
-                    // (What I was saying here??)
+                    start = end;
+                    
                 }
             }
         }
