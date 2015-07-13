@@ -20,9 +20,28 @@ public class FilterIndoorLevel {
     
     private int currentLevel = Constants.ALLLEVELS;
     private IsMember isInGraph;
+    private boolean enabled;
     
     public FilterIndoorLevel() {
+        enable();
         isInGraph = new AlwaysMember();
+    }
+    
+    public void setEnabled(boolean enabled) {
+        if(enabled)
+            enable();
+        else
+            disable();
+    }
+    
+    public void enable() {
+        enabled = true;
+    }
+    
+    public void disable() {
+        // Show all before disable
+        show(Constants.ALLLEVELS,null,true);
+        enabled = false;
     }
     
     private static class IsMember {
@@ -51,9 +70,17 @@ public class FilterIndoorLevel {
     
     
     public void show(int level, Relation graph, boolean allGraphs) {
+        if(!enabled) {
+            return;
+        }
         boolean changed = false;
         Collection<OsmPrimitive> deselect = new HashSet<>();
         Main.debug("Filter on level="+level);
+        
+        if(null == PescePlugin.ds) {
+            Main.debug("[...show] PescePlugin.ds ot initialized");
+            return;
+        }
         
         if(Constants.PREVIOUSLEVEL == level) {
             level = currentLevel;
