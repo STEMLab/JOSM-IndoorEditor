@@ -94,26 +94,29 @@ import org.openstreetmap.josm.tools.Shortcut;
 public class FloorsFilterDialog extends ToggleDialog implements DataSetListener {
 
     // Types of nodes of 
-    private static final int TREEROOT = 1;
-    private static final int TREEFLOOR = 2;
-    private static final int TREESTATES = 3;
-
-    public static final String IGMLLABEL = "IndoorGML mode";
-    public static final String BUILDINLABEL = "Buildings mode"; 
+    public static final int TREEROOT = 1;
+    public static final int TREEFLOOR = 2;
+    public static final int TREESTATES = 3;
 
     public static final String TREELABELALL = "All"; // TODO FloorsFilterDialog.TREELABELALL
     public static final String GRAPHSLABEL = "Graphs"; // TODO FloorsFilterDialog.GRAPHSLABEL
 
-    final static String[] enableFiltersIcons = {"filter-off","filter-on"};
-    final static String[] enableFiltershints = {"Enable filters", "Disable filters"};
-    
     public static FloorsFilterDialog INSTANCE = null;
     
     private JTree tree = null; // Very final
+    public JTree getTree() {
+        return tree;
+    }
+
     private JTree treeGraphs = null;
     
+    public JTree getTreeGraphs() {
+        return treeGraphs;
+    }
+    
+    private ButtonsPanel buttonsPanel;
+
     // Edit mode
-    private SideButton modeButton = null;
     private Map<DataSet,LayerType> dsToType = null;
    
     //final static private Set<String> specialFloors = new HashSet<>(Arrays.asList(new String[]{ TREELABELALL }));
@@ -121,14 +124,14 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     private FilterIndoorLevel filterLevel;
     
 
+    public FilterIndoorLevel getFilterLevel() {
+        return filterLevel;
+    }
+
     private TreePath[] sp; // selected paths
     
     private List<Integer> newLevels = null;
     
-    boolean rawCreationMode;
-    
-    // WORKAROUND
-//    private long __events_to_ignore;
 
     /**
      * Constructs a new {@code FilterDialog}
@@ -144,7 +147,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             System.exit(1);
         }
         INSTANCE = this;
-        rawCreationMode = false;
         sp = new TreePath[2];
         sp[0] = null;
         sp[1] = null;
@@ -305,7 +307,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 //        }
     }
 
-    private void build(boolean dataSetChanged) {
+    void build(boolean dataSetChanged) {
 
         //DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
         if(PescePlugin.ds != Main.main.getCurrentDataSet()) {
@@ -451,14 +453,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
              
              add(treesPanel, BorderLayout.CENTER);
              
-             final JPanel buttonRowPanel = new JPanel(Main.pref.getBoolean("dialog.align.left", false)
-                     ? new FlowLayout(FlowLayout.LEFT) : new GridLayout(1, 2));
-
-
+             buttonsPanel = new ButtonsPanel(this);
              
-             buttons(buttonRowPanel);
-             
-             this.add(buttonRowPanel,BorderLayout.SOUTH);
+             this.add(buttonsPanel,BorderLayout.SOUTH);
 
              //setIndoorgmlEditMode();
              
@@ -568,313 +565,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         Main.debug("[...build] End of build()");
     }
     
-    private void buttons(final JPanel panel) {
-
-        SideButton refreshButton = new SideButton(new AbstractAction() {
-            {
-                //putValue(NAME, tr(""));
-                putValue(SHORT_DESCRIPTION, tr("Redraw the plugin interface"));
-                putValue(SMALL_ICON, ImageProvider.get("dialogs", "refresh"));
-            }
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                build(false);
-            }
-            
-        });
-        
-        SideButton enableFiltersButton = new SideButton(new AbstractAction() {
-            
-            boolean filtersEnabled;
-            {
-                filtersEnabled = true;
-                //putValue(NAME, tr(""));
-                putValue(SHORT_DESCRIPTION, tr(enableFiltershints[1]));
-                putValue(SMALL_ICON, ImageProvider.get("dialogs", enableFiltersIcons[1]));
-            }
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                filtersEnabled = !filtersEnabled;
-                filterLevel.setEnabled(filtersEnabled);
-                putValue(SHORT_DESCRIPTION, tr(enableFiltershints[filtersEnabled ? 1 : 0]));
-                putValue(SMALL_ICON, ImageProvider.get("dialogs", enableFiltersIcons[filtersEnabled ? 1 : 0]));
-                build(false);
-            }
-            
-        });
-        
-        SideButton uploadButton = Constants.COMO ? null : new SideButton(new AbstractAction() {
-            {
-                putValue(NAME, tr("Upload"));
-                putValue(SHORT_DESCRIPTION, tr("Upload all layers to {0}", "i-locate"));
-                putValue(SMALL_ICON, ImageProvider.get("dialogs", "up"));
-            }
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Main.debug("Upload all datasets!");
-
-                for (UploadInfo info : PescePlugin.getUploadInfo()) {
-                    Main.debug("[FloorsFilterDialog.uploadButton.actionPerformed] " + info.layerName + " " + info.dataSet.toString());
-                    IlocateUploadTask task = new IlocateUploadTask(info.layerName, NullProgressMonitor.INSTANCE, false);
-
-                    Main.worker.submit(task);
-                }
-
-                //filterLevel.show(Constants.PREVIOUSLEVEL);
-
-                if (Main.isDisplayingMapView()) {
-                    Main.map.mapView.repaint();
-                    /// Main.map.filterDialog.updateDialogHeader();
-                }
-            }
-        });
-
-        SideButton linkButton = new SideButton(new AbstractAction() {
-            {
-                putValue(NAME, tr("Link"));
-                putValue(SHORT_DESCRIPTION, tr("Select 2 states and link them"));
-                putValue(SMALL_ICON, ImageProvider.get("dialogs", "linknodes"));
-            }
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] Create a link");
-
-                // TODO: take the 2 selected nodes and create a link 
-                TreePath[] paths = tree.getSelectionPaths();
-                if (2 == tree.getSelectionCount() && paths[0].getPathCount() == TREESTATES && paths[1].getPathCount() == TREESTATES) {
-                    // GOOD
-                    PrimitiveUserObject treeNode1 = (PrimitiveUserObject) ((FloorMutableTreeNode) paths[0].getLastPathComponent()).getUserObject();
-                    PrimitiveUserObject treeNode2 = (PrimitiveUserObject) ((FloorMutableTreeNode) paths[1].getLastPathComponent()).getUserObject();
-
-                    // TODO: link them
-
-                    Main.debug(treeNode1 + "," + treeNode2);
-
-                    Node node1 = (Node) PescePlugin.ds.getPrimitiveById(treeNode1.id);
-                    Node node2 = (Node) PescePlugin.ds.getPrimitiveById(treeNode2.id);
-
-                    Relation relation1 = null, relation2 = null;
-                    // Problem:
-                    // The link between A and B has to be unique
-                    // And belong to the same graph
-                    Set<Long> node1Ways = new HashSet<>(), node2Ways = new HashSet<>();
-                    for (OsmPrimitive ref : node1.getReferrers()) {
-                        if (ref instanceof Way) {
-                            node1Ways.add(ref.getUniqueId());
-                        } else if (ref instanceof Relation) {
-                            // This has to be unique
-                            if (null != relation1) {
-                                Main.warn("[...linkButton.actionPerformed] The node belongs to more than one relation.");
-                            }
-                            relation1 = (Relation) ref;
-                        }
-                    }
-                    for (OsmPrimitive ref : node2.getReferrers()) {
-                        if (ref instanceof Way) {
-                            node2Ways.add(ref.getUniqueId());
-                        } else if (ref instanceof Relation) {
-                            // This has to be unique
-                            if (null != relation2) {
-                                Main.warn("[...linkButton.actionPerformed] The node belongs to more than one relation.");
-                            }
-                            relation2 = (Relation) ref;
-                        }
-                    }
-
-                    // Check the format
-                    if (null == relation1 || null == relation2) {
-                        Main.warn("[...linkButton.actionPerformed] node1 or node2 doesn't have a Graph");
-                        // TODO: create a message for the user: node1 or node2 doesn't have a Graph
-                        return;
-                    }
-                    if (relation1 != relation2) {
-                        Main.warn("[...linkButton.actionPerformed] relation1 and relation2 are different. Wrong data format");
-                        // TODO: create a message for the user: relation1 and relation2 are different. Wrong data format
-                        return;
-                    }
-
-                    if (Collections.disjoint(node1Ways, node2Ways)) {
-
-                        Way link = new Way();
-
-                        link.addNode(node1);
-                        link.addNode(node2);
-
-                        // IL -> InterLayer 
-                        // Lexically order the names
-                        rawCreationMode = true;
-                        link.put("name", "IL" + (node1.getName().compareTo(node2.getName()) < 0 ? node1.getName() + node2.getName() : node2.getName() + node1.getName()));
-                        link.put(Constants.OSM_KEY_LEVEL, chooseLevel(node1, node2));
-
-//                     Main.debug("ZZZ "+ds.getRelations().contains(relation1));
-//                     Main.debug("ZZZ "+ds.getNodes().contains(node1));
-//                     Main.debug("ZZZ "+ds.getNodes().contains(node2));
-//                     Main.debug("ZZZ "+ds.getWays().contains(link));
-
-                       PescePlugin.ds.addPrimitive(link);
-
-//                     Main.debug("ZZZ "+ds.getWays().contains(link));
-//
-//                     Main.debug("XXX "+ds.isSelected(relation1));
-//                     Main.debug("XXX "+ds.isSelected(node1));
-//                     Main.debug("XXX "+ds.isSelected(node2));
-
-                        // Add link to relation1/2
-                        relation1.addMember(new RelationMember(Constants.OSM_RELATION_ROLE_TRANSITION, link));
-
-                    } else {
-                        // TODO: create a message for the user: this link exists yet.
-                        Main.debug("[FloorsFilterDialog.linkButton.actionPerformed] This link exists yet");
-                    }
-
-                } else {
-                    // TODO error message
-                    Main.debug("Quality or quantity of selectec features aren't suitable to create a link. Number: " + tree.getSelectionCount());
-                }
-
-                //filterLevel.show(Constants.PREVIOUSLEVEL);
-
-                if (Main.isDisplayingMapView()) {
-                    Main.map.mapView.repaint();
-                }
-            }
-        });
-
-        SideButton newGraphButton = new SideButton(new AbstractAction() {
-            {
-                putValue(NAME, tr("New graph"));
-                putValue(SHORT_DESCRIPTION, tr("Add a new IndoorGML graph"));
-                //putValue(SMALL_ICON, ImageProvider.get("dialogs", "newgraph"));
-            }
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String name = JOptionPane.showInputDialog("Enter the graph name");
-                if(null != name) {
-                    // TODO: check null pointer exception?
-                    DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGraphs.getModel().getRoot();
-                    
-                    Relation graph = new Relation();
-                    graph.put("name", name); // TODO: inser all Indoor graph here. TODO TODO: Create a newIndoorGraph somewhere
-                    graph.put("type", Constants.OSM_RELATION_TYPE_SPACELAYER); 
-                    PescePlugin.ds.addPrimitive(graph);
-                    
-                    rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(graph.getPrimitiveId(), graph.getName())));
-                    // Refresh the gui
-                    build(false);
-                }
-            }
-
-        });
-        
-        SideButton newLevelButton = new SideButton(new AbstractAction() {
-            {
-                putValue(NAME, tr("New level"));
-                putValue(SHORT_DESCRIPTION, tr("Add a new indoor level"));
-                //putValue(SMALL_ICON, ImageProvider.get("dialogs", "??"));
-            }
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String inputLevel = JOptionPane.showInputDialog("Enter the new level");
-                if(null != inputLevel) {
-                    if(!isNumber(inputLevel)) {
-                        JOptionPane.showMessageDialog(null, "Level must be integer");
-                        return;
-                    }
-                    
-                    
-                    addNewLevel(inputLevel);
-                 // TODO: put these 5 lines into a method! (newLevel)
-//                    FloorMutableTreeNode floor = new FloorMutableTreeNode(inputLevel);
-//                    DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-//                    FloorMutableTreeNode root = (FloorMutableTreeNode) treeModel.getRoot();
-//                    treeModel.insertNodeInto(floor, root, root.getChildCount());
-//                    getNewLevels().add(Integer.parseInt(inputLevel));
-                }
-            }
-
-            
-        });
-        
-        SideButton newLayerButton = new SideButton(new AbstractAction() {
-            {
-                putValue(NAME, tr("New layer"));
-                putValue(SHORT_DESCRIPTION, tr("Add a new JOSM layer"));
-                //putValue(SMALL_ICON, ImageProvider.get("dialogs", "newgraph"));
-            }
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String name = JOptionPane.showInputDialog("Enter the layer name");
-                if(null != name) {
-                    if (name.isEmpty()) {
-                        name = OsmDataLayer.createNewName();
-                    }
-                    DataSet ds;
-                    OsmDataLayer layer = new OsmDataLayer(ds = new DataSet(), name, null);
-                    ds.setUploadDiscouraged(true); // Do not upload these data. (It does not seem useful)
-                    Main.main.addLayer(layer); // null -> computeBbox(bounds)
-                }
-            }
-
-        });
-        
-        modeButton = new SideButton(new AbstractAction() {
-            {
-                putValue(NAME, tr(IGMLLABEL));
-                putValue(SHORT_DESCRIPTION, tr("Set the type of active layer"));
-                // putValue(SMALL_ICON, ImageProvider.get("dialogs", "newgraph"));
-            }
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // First time:
-                LayerType type = getLayerType();
-                if(null == type) {
-                    setLayerType(LayerType.IGML);
-                    type = LayerType.IGML;
-                }
-                
-                switch(type) {
-                case IGML:
-                    setLayerType(LayerType.BUILDING);
-                    putValue(NAME, tr(BUILDINLABEL));
-                    break;
-                case BUILDING:
-                    setLayerType(LayerType.IGML);
-                    putValue(NAME, tr(IGMLLABEL));
-                    break;
-                } 
-            }
-
-        });
-        
-        final JPanel gridPanel = new JPanel(new GridLayout(2, 4)); 
-        panel.add(gridPanel);
-        
-        gridPanel.add(refreshButton);
-        gridPanel.add(enableFiltersButton);
-        gridPanel.add(linkButton);
-        if(!Constants.COMO) {
-            gridPanel.add(uploadButton);
-        } else {
-            gridPanel.add(new JLabel());
-        }
-        gridPanel.add(modeButton);
-        gridPanel.add(newGraphButton);
-        gridPanel.add(newLevelButton);
-        gridPanel.add(newLayerButton);
-    }
-    
-    String chooseLevel(Node a, Node b) {
-        String l = a.get(Constants.OSM_KEY_LEVEL);
-        String m = b.get(Constants.OSM_KEY_LEVEL);
-        if(null == l)
-            return m;
-        if(null == m)
-            return l;
-        return Integer.parseInt(l) < Integer.parseInt(m) ? l : m;
-    }
-    
     private List<Integer> getNewLevels() {
         if(null == newLevels) {
             newLevels = new ArrayList<>();
@@ -884,21 +574,22 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     
     // Edit mode manipulation
     public void setBuildingsEditMode() {
-        if(null != modeButton && null != modeButton.getAction()) {
-            modeButton.getAction().putValue(Action.NAME, BUILDINLABEL);
-            setLayerType(LayerType.BUILDING);
-        }
+        buttonsPanel.setModeButtonBuildingsEditMode();
+        setLayerType(LayerType.BUILDING);
     }
 
 
     public void setIndoorgmlEditMode() {
-        if(null != modeButton && null != modeButton.getAction()) {
-            modeButton.getAction().putValue(Action.NAME, IGMLLABEL);
-            setLayerType(LayerType.IGML);
-        }
+        buttonsPanel.setModeButtonIndoorgmlEditMode();
+        setLayerType(LayerType.IGML);
     }
     /////////////////////////
 
+    private TreePath getTreePath(Relation r) {
+        // TODO Implement
+        return null;
+    }
+    
     @Override
     public void destroy() {
         super.destroy();
@@ -1081,13 +772,13 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         }
     }
     
-    private LayerType getLayerType() {
+    public LayerType getLayerType() {
         if(null == dsToType) {
             return null;
         }
         return dsToType.get(PescePlugin.ds);
     }
-    private void setLayerType(LayerType layerType) {
+    public void setLayerType(LayerType layerType) {
         if(null == dsToType) {
             dsToType = new HashMap<>();
         }
@@ -1119,7 +810,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         return stringToLevel((String)((FloorMutableTreeNode) selected.getLastPathComponent()).getUserObject());
     }
     
-    private void addNewLevel(String newLevel) {
+    public void addNewLevel(String newLevel) {
         
         FloorMutableTreeNode floor = new FloorMutableTreeNode(newLevel);
         DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
@@ -1224,7 +915,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         p.put(Constants.OSM_KEY_LEVEL, String.valueOf(level));
     }
     
-    static private boolean isNumber(String s) {
+    static public boolean isNumber(String s) {
         try {
             Integer.parseInt(s);
         } catch(Exception e) {
@@ -1233,7 +924,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         return true;
     }
     
-    static private class FloorMutableTreeNode extends DefaultMutableTreeNode implements Comparable<FloorMutableTreeNode> {
+    static public class FloorMutableTreeNode extends DefaultMutableTreeNode implements Comparable<FloorMutableTreeNode> {
 
         public FloorMutableTreeNode(Object userObject, boolean allowsChildren) {
             super(userObject, allowsChildren);
@@ -1271,7 +962,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         }
     }
 
-    static private class PrimitiveUserObject {
+    static public class PrimitiveUserObject {
         public String label;
         public PrimitiveId id;
         
