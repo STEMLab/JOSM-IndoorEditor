@@ -419,25 +419,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 }
             });
 
-         
-         //uploadButton.setPreferredSize(new Dimension(200, 100));
-         
-//         SideButton downButton = new SideButton(new AbstractAction() {
-//             {
-//                 //putValue(NAME, tr("Down"));
-//                 //putValue(SHORT_DESCRIPTION, tr("Move filter down."));
-//                 putValue(SMALL_ICON, ImageProvider.get("dialogs", "pin"));
-//             }
-//             @Override
-//             public void actionPerformed(ActionEvent e) {
-//                 Main.debug("PRESS down");
-//             }
-//         });
-    //
-//         downButton.setPreferredSize(new Dimension(100, 100));
-            //this.add(new JLabel("Container doesn't use BorderLayout!"),BorderLayout.PAGE_START);
-            //this.add(downButton,BorderLayout.CENTER);
-         
              JScrollPane scrollableFloors = new JScrollPane(tree, 
                      JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
                      JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -457,8 +438,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
              
              this.add(buttonsPanel,BorderLayout.SOUTH);
 
-             //setIndoorgmlEditMode();
-             
              treeGraphs.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
 
                 @Override
@@ -481,15 +460,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                 }
                  
              });
-             
-                          
-//             this.add(uploadButton,BorderLayout.PAGE_END);
-//             this.add(linkButton,BorderLayout.PAGE_END);  
-//             
-//             createLayout(this, true, Arrays.asList(new SideButton[] {
-//                     uploadButton, linkButton
-//             }));
-             
+
             ///////////////////////////////////////
              
             treeModel = (DefaultTreeModel) tree.getModel();
@@ -505,21 +476,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         FloorMutableTreeNode all = new FloorMutableTreeNode(TREELABELALL, false);
         treeModel.insertNodeInto(all, root, 0);
 
-//        FloorMutableTreeNode fu1 = new FloorMutableTreeNode("-2"+new Random().nextInt(100));
-//        FloorMutableTreeNode f0 = new FloorMutableTreeNode("10");
-//        FloorMutableTreeNode f1 = new FloorMutableTreeNode("11");
-
-//        root.add(f0);
-//        f0.add(new FloorMutableTreeNode("Example Fake Node", false));
-//        root.add(f1);
-//        f1.add(new FloorMutableTreeNode("Example Fake Node", false));
-//        f1.add(new FloorMutableTreeNode("Example Fake Node", false));
-//        f1.add(new FloorMutableTreeNode("Example Fake Node", false));
-//        root.add(f0);Main.debug("f0");
-//        root.add(f1);Main.debug("fu1");
-//        root.add(fu1);Main.debug("fu1");
-//        fu1.add(new FloorMutableTreeNode("Example Fake Node", false));
-//        fu1.add(new FloorMutableTreeNode("Example Fake Node", false));
 
         tree.setShowsRootHandles(true);
         tree.setRootVisible(false);
@@ -529,15 +485,8 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 
         root.sortChildren();
 
-        //public void expandPath(TreePath path)
         tree.expandPath(new TreePath(root.getPath()));
-//        @SuppressWarnings("unchecked")
-//        Enumeration<FloorMutableTreeNode> e = root.children();
-//        while (e.hasMoreElements()) {
-//            tree.makeVisible(new TreePath(e.nextElement().getPath()));
-//        }
 
-        
         // Compile Graphs part
         if(null != PescePlugin.ds) {
             Main.debug(String.format("[FloorsFilterDialog.build] Add %d relations to the Graphs tree", PescePlugin.ds.getRelations().size()));
@@ -585,11 +534,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     }
     /////////////////////////
 
-    private TreePath getTreePath(Relation r) {
-        // TODO Implement
-        return null;
-    }
-    
     @Override
     public void destroy() {
         super.destroy();
@@ -633,11 +577,9 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             Main.debug("[FloorsFilterDialog.dataChangedOrAdded] type: "+type);
             Main.debug("[FloorsFilterDialog.dataChangedOrAdded] size: "+event.getPrimitives().size());
             
-            boolean primitivesAddedRootEvent = false;
             Collection<AbstractDatasetChangedEvent> events;
             switch(type) {
             case PRIMITIVES_ADDED:
-                primitivesAddedRootEvent = true;
                 events = new ArrayList<>();
                 events.add(event);
                 break;
@@ -652,19 +594,6 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             for(AbstractDatasetChangedEvent e : events) {
                 type = e.getType();
 
-                
-                // WORKAROUND
-//                if(__events_to_ignore >0) {
-//                    
-//                    __events_to_ignore--;
-//                    if(type != DatasetEventType.PRIMITIVES_ADDED && type != DatasetEventType.RELATION_MEMBERS_CHANGED) {
-//                        Main.debug("\t\tWORKAROUND: ignore this event. type: "+type+" __: "+__events_to_ignore);
-//                        return;
-//                    } else {
-//                        Main.debug("\t\tWORKAROUND: don't skip this because of type. "+__events_to_ignore);
-//                    }
-//                }
-                
                 Collection<? extends OsmPrimitive> prim = e.getPrimitives();
                 Main.debug("[FloorsFilterDialog.dataChangedOrAdded] size: "+prim.size());
                 
@@ -978,32 +907,14 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
     }
     
     private Robot robot = null;
-    
+
     private void pressEscape() {
         try {
-            if(null == robot) {
-                robot = new Robot();   
+            if (null == robot) {
+                robot = new Robot();
             }
-
-//        new Thread(new Runnable() {
-//            
-//            @Override
-//            public void run() {
-//                try {
-//                    // TODO Auto-generated method stub
-//                    Thread.sleep(500);
-//            // Simulate a key press
-//
-//                } catch (InterruptedException e) {
-//                    // TODO Auto-generated catch block
-//                    e.printStackTrace();
-//                }
-//                
-//            }
-//        }).start();
-        robot.keyPress(KeyEvent.VK_ESCAPE);
-        robot.keyRelease(KeyEvent.VK_ESCAPE);
-
+            robot.keyPress(KeyEvent.VK_ESCAPE);
+            robot.keyRelease(KeyEvent.VK_ESCAPE);
         } catch (AWTException e1) {
             e1.printStackTrace();
         }

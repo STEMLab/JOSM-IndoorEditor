@@ -151,18 +151,31 @@ public class PesceExporter extends FileExporter {
         IndoorFeaturesType document;
         try {
             document = OSMConverter.convert(data);
+            
             if(null != file) {
                 try(OutputStream os = getOutputStream(file)){
                     
                     
+                    
                     JAXBContext jaxbContext = JAXBContext.newInstance(IndoorFeaturesType.class);
                     Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-                    try {
-                        jaxbMarshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new IndoorGMLNamespaceMapper());
-                    } catch (PropertyException e) {
-                        // In case another JAXB implementation is used
-                        e.printStackTrace();
+                    IndoorGMLNamespaceMapper mapper = new IndoorGMLNamespaceMapper();
+                    
+                    Main.debug("mapper class name: "+mapper.getClass().getSuperclass().getName());
+                    for(String propName : new String[] {
+                            "com.sun.xml.bind.namespacePrefixMapper", // Windows
+                            "com.sun.xml.internal.bind.namespacePrefixMapper",
+                            "com.sun.xml.bind.marshaller.NamespacePrefixMapper"}) {
+                        Main.debug("propName: "+propName);
+                        try {
+                            jaxbMarshaller.setProperty(propName, mapper);
+                            break;
+                        } catch (PropertyException e) {
+                            // In case another JAXB implementation is used
+                            e.printStackTrace();
+                        }    
                     }
+                    
                     // output pretty printed
                     jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
                     jaxbMarshaller.marshal(document, os);

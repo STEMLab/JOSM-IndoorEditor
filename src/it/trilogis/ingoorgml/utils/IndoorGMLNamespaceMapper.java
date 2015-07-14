@@ -3,6 +3,8 @@
  */
 package it.trilogis.ingoorgml.utils;
 
+import org.openstreetmap.josm.Main;
+
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 
 /**
@@ -27,6 +29,7 @@ public class IndoorGMLNamespaceMapper extends NamespacePrefixMapper {
      */
     @Override
     public String getPreferredPrefix(String namespaceUri, String suggestion, boolean requirePrefix) {
+        Main.debug(String.format("String namespaceUri, String suggestion, boolean requirePrefix: %s %s %s",namespaceUri,suggestion,requirePrefix));
         if (INDOORGML_URI.equals(namespaceUri)) {// || INDOORGML_URI2.equals(namespaceUri)) {
             if (!requirePrefix){
                 return INDOORGML_DEFAULT_PREFIX;
