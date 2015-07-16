@@ -72,7 +72,7 @@ public class ButtonsPanel extends JPanel {
             }
             @Override
             public void actionPerformed(ActionEvent e) {
-                dialog.build(false);
+                dialog.build();
             }
             
         });
@@ -92,7 +92,7 @@ public class ButtonsPanel extends JPanel {
                 dialog.getFilterLevel().setEnabled(filtersEnabled);
                 putValue(SHORT_DESCRIPTION, tr(enableFiltershints[filtersEnabled ? 1 : 0]));
                 putValue(SMALL_ICON, ImageProvider.get("dialogs", enableFiltersIcons[filtersEnabled ? 1 : 0]));
-                dialog.build(false);
+                dialog.build();
             }
             
         });
@@ -272,7 +272,7 @@ public class ButtonsPanel extends JPanel {
                     
                     rootGraphs.add(new DefaultMutableTreeNode(new PrimitiveUserObject(graph.getPrimitiveId(), graph.getName())));
                     // Refresh the gui
-                    dialog.build(false);
+                    dialog.build();
                 }
             }
 

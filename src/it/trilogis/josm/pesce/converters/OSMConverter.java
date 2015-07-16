@@ -22,7 +22,7 @@ import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 
-import static it.trilogis.josm.pesce.UtilsFromPython.*;
+import static it.trilogis.josm.pesce.Utils.*;
 
 public class OSMConverter {
     

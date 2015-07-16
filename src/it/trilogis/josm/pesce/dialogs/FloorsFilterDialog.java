@@ -7,6 +7,7 @@ import it.trilogis.josm.pesce.FilterIndoorLevel;
 import it.trilogis.josm.pesce.PescePlugin;
 import it.trilogis.josm.pesce.PescePlugin.LayerType;
 import it.trilogis.josm.pesce.PescePlugin.UploadInfo;
+import it.trilogis.josm.pesce.Utils;
 import it.trilogis.josm.pesce.serverconnection.IlocateUploadTask;
 
 import java.awt.AWTException;
@@ -152,13 +153,13 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         sp[1] = null;
         setIsButtonHiding(ButtonHidingType.ALWAYS_HIDDEN);
         filterLevel = new FilterIndoorLevel();
-        build(false);
+        build();
     }
 
     @Override
     public void showNotify() {
         DatasetEventManager.getInstance().addDatasetListener(this, FireMode.IN_EDT_CONSOLIDATED);
-        build(false);
+        build();
         // Repaint of the dialog
     }
 
@@ -306,8 +307,11 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 //            //root.add(floor); //moved up
 //        }
     }
-
-    void build(boolean dataSetChanged) {
+    
+    void build() {
+        build(false,false);
+    }
+    void build(boolean dataSetChanged, boolean saveSelections) {
 
         //DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
         if(PescePlugin.ds != Main.main.getCurrentDataSet()) {
@@ -465,8 +469,17 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
              
             treeModel = (DefaultTreeModel) tree.getModel();
             
+            if(saveSelections) {
+                Main.error("1s");
+                saveTreeState(tree);
+            }
+            
         } else {
             Main.debug("get tree");
+            if(saveSelections) {
+                Main.error("2s");
+                saveTreeState(tree);
+            }
             treeModel = (DefaultTreeModel) tree.getModel();
             root = (FloorMutableTreeNode) treeModel.getRoot();
             removeNodes(root, treeModel);
@@ -486,9 +499,20 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         root.sortChildren();
 
         tree.expandPath(new TreePath(root.getPath()));
+        
+        if(saveSelections) {
+            Main.error("1r");
+            restoreTreeState(tree);
+        }
 
         // Compile Graphs part
         if(null != PescePlugin.ds) {
+            
+            if(saveSelections) {
+                Main.error("g1s");
+                saveTreeState(treeGraphs);
+            }
+            
             Main.debug(String.format("[FloorsFilterDialog.build] Add %d relations to the Graphs tree", PescePlugin.ds.getRelations().size()));
             DefaultTreeModel treeGhraphsModel = (DefaultTreeModel) treeGraphs.getModel();
             DefaultMutableTreeNode rootGraphs = (DefaultMutableTreeNode) treeGhraphsModel.getRoot();
@@ -508,6 +532,11 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
 //            while (e.hasMoreElements()) {
 //                treeGraphs.makeVisible(new TreePath(e1.nextElement().getPath()));
 //            }
+            
+            if(saveSelections) {
+                Main.error("g1r");
+                restoreTreeState(treeGraphs);
+            }
         } else {
             //Main.debug("[FloorsFilterDialog.build] DataSet not defined yet");
         }
@@ -569,7 +598,7 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
         if(newDs != PescePlugin.ds) {
             Main.debug("[FloorsFilterDialog.dataChangedOrAdded] Update the dataSet");
             PescePlugin.ds = newDs;
-            build(true);
+            build(true,false);
         } else {
             type = event.getType();
             // The DataSet is ok, what did it change?
@@ -618,7 +647,12 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                                 
                                 // Check if the graph is selected 
                                 if(null == graph || !isDefinedLevel(level)) {
+                                    // Remove also linked primitives (Ways linked to Node, I hope)
+                                    for(OsmPrimitive lp : p.getReferrers()) {
+                                        PescePlugin.ds.removePrimitive(lp);
+                                    }
                                     PescePlugin.ds.removePrimitive(p); // Wrong way to do this
+                                    
                                     JOptionPane.showMessageDialog(null,"You must select a graph and a level");
                                     return;
                                 } else {
@@ -662,6 +696,8 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
                             
                         }
                     }
+                    // Add the new primitive to the gui
+                    build(false,true); // same dataSet, save trees selections
                     break;
 //                case CHANGESET_ID_CHANGED:
 //                    break;
@@ -917,6 +953,104 @@ public class FloorsFilterDialog extends ToggleDialog implements DataSetListener 
             robot.keyRelease(KeyEvent.VK_ESCAPE);
         } catch (AWTException e1) {
             e1.printStackTrace();
+        }
+    }
+    
+    private Map<JTree, Object[]> treesSelections = null;
+    
+    public Map<JTree, Object[]> getTreesSelections() {
+        if(null == treesSelections) {
+            treesSelections = new HashMap<>();
+        }
+        return treesSelections;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void saveTreeState(JTree tree) {
+
+        if(null==tree) return;
+        DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
+        
+        Set<String> selected = new HashSet<>();
+        
+        Set<TreePath> selectedPaths = new HashSet<>();
+        for(TreePath row : tree.getSelectionPaths()) {
+            selectedPaths.add(row);
+        }
+        
+        // Save selection
+        for(Object node : Utils.iterable(root.depthFirstEnumeration())) {
+            if(selectedPaths.contains(new TreePath(((DefaultMutableTreeNode)node).getPath()))) {
+                String uo = ((DefaultMutableTreeNode)node).getUserObject().toString();
+                selected.add(uo);
+                Main.debug("[...saveSelection] selected uo: "+uo.toString());    
+            }
+        }
+        
+        // Save expansion
+        Set<String> expandedNodesDepth1 = new HashSet<>();
+        for(Object ch : Utils.iterable(root.children())) {
+            
+            if(tree.isExpanded(new TreePath(((DefaultMutableTreeNode)ch).getPath()))) {
+                String uo = ((DefaultMutableTreeNode)ch).getUserObject().toString();
+                expandedNodesDepth1.add(uo);
+                Main.debug("[...saveSelection] expanded uo: "+uo.toString());    
+            }
+        }
+        Main.debug("[...saveSelection] "+expandedNodesDepth1.size());
+//        List<TreePath> expandedNodesDepth1 = Collections.list(tree.getExpandedDescendants(new TreePath(((DefaultMutableTreeNode)tree.getModel().getRoot()).getPath())));
+//        Main.debug("[...saveSelection] "+expandedNodesDepth1.size());
+//        for(TreePath p : expandedNodesDepth1) {
+//            Main.debug("[...saveSelection] > "+p.toString());
+//        }
+        getTreesSelections().put(tree, new Object[] {selected, expandedNodesDepth1});
+        
+        // Plan B
+//        tree.setSelectionPaths(null);
+//        tree.getSelectionPaths();
+        // Plan A
+//        tree.setSelectionRows(null);
+//        tree.getSelectionRows();
+        
+        
+    }
+    @SuppressWarnings("unchecked")
+    private void restoreTreeState(JTree tree) {
+        if(null==tree) return;
+        Object[] o = getTreesSelections().get(tree);
+        //tree.setSelectionPaths((TreePath[])o[0]);
+        Set<String> selected = (Set<String>)o[0];
+//        for(TreePath path : (List<TreePath>)o[1]) {
+//            Main.debug("[...restoreSelection] > restoring >> "+path.toString());
+//            tree.expandPath(path);
+//        }
+        DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
+        
+        // Restore selection
+        TreePath[] selectedPaths = new TreePath[selected.size()];
+        int i=0;
+        
+        tree.setSelectionPaths(selectedPaths);
+        
+        for(Object node : Utils.iterable(root.depthFirstEnumeration())) {
+            String repr = (String) ((DefaultMutableTreeNode)node).getUserObject().toString();
+            if((selected.contains(repr))) {
+                Main.debug("[...restoreSelection] uo: "+repr);
+                selectedPaths[i++] = new TreePath(((DefaultMutableTreeNode)node).getPath()); 
+                
+            } else
+                Main.debug("[...restoreSelection] !uo: "+repr.toString());
+        }
+        tree.setSelectionPaths(selectedPaths);
+        
+        // Restore expansion
+        for(Object ch : Utils.iterable(root.children())) {
+            String repr = (String) ((DefaultMutableTreeNode)ch).getUserObject().toString();
+            if(((Set<String>)o[1]).contains(repr)) {
+                Main.debug("[...restoreSelection] uo: "+repr);
+                tree.expandPath(new TreePath(((DefaultMutableTreeNode)ch).getPath()));
+            } else
+                Main.debug("[...restoreSelection] !uo: "+repr.toString());
         }
     }
 }

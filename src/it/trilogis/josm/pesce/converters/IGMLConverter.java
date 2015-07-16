@@ -2,7 +2,7 @@ package it.trilogis.josm.pesce.converters;
 
 import it.trilogis.josm.pesce.Constants;
 import it.trilogis.josm.pesce.IdsFactory;
-import it.trilogis.josm.pesce.UtilsFromPython;
+import it.trilogis.josm.pesce.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +26,7 @@ import org.openstreetmap.josm.data.osm.Way;
 
 import net.opengis.gml.v_3_2_1.AbstractCurveType;
 import net.opengis.indoorgml.v_1_0.core.*;
-import static it.trilogis.josm.pesce.UtilsFromPython.*;
+import static it.trilogis.josm.pesce.Utils.*;
 
 public class IGMLConverter {
     
@@ -342,7 +342,7 @@ public class IGMLConverter {
                         if(st!=null) {
                             nodeId2 = fixNodeId(st.getId());
                         } else {
-                            nodeId2 = UtilsFromPython.strip(spt2.getHref(),"#");
+                            nodeId2 = Utils.strip(spt2.getHref(),"#");
                             System.out.println("&4 "+nodeId2);
                         }
 
