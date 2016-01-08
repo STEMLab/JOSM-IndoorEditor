@@ -122,7 +122,7 @@ public class DownloadIlocateTask extends AbstractDownloadTask {
 
         public DownloadTask(boolean newLayer, String url, ProgressMonitor progressMonitor) {
             // Always create a new level
-            super(true, tr("Downloading i-locate data"), progressMonitor, false);
+            super(true, tr("Downloading i-locate data"), progressMonitor, false, false);
             this.url = url;
         }
 

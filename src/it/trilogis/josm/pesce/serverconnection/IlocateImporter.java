@@ -1,24 +1,17 @@
 package it.trilogis.josm.pesce.serverconnection;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
-import it.trilogis.josm.pesce.SetContextHandler.Context;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
 import org.openstreetmap.josm.Main;
-import org.openstreetmap.josm.actions.downloadtasks.DownloadOsmTask;
 import org.openstreetmap.josm.actions.downloadtasks.DownloadTask;
 import org.openstreetmap.josm.io.remotecontrol.PermissionPrefWithDefault;
-import org.openstreetmap.josm.io.remotecontrol.handler.ImportHandler;
 import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler;
-import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerBadRequestException;
-import org.openstreetmap.josm.io.remotecontrol.handler.RequestHandler.RequestHandlerErrorException;
 import org.openstreetmap.josm.tools.Utils;
 
 public class IlocateImporter extends RequestHandler {
@@ -89,11 +82,11 @@ public class IlocateImporter extends RequestHandler {
         if (request.indexOf('?') != -1) {
             String query = request.substring(request.indexOf('?') + 1);
             if (query.indexOf("url=") == 0) {
-                args.put("url", decodeParam(query.substring(4)));
+                args.put("url", Utils.decodeUrl(query.substring(4)));
             } else {
                 int urlIdx = query.indexOf("&url=");
                 if (urlIdx != -1) {
-                    args.put("url", decodeParam(query.substring(urlIdx + 5)));
+                    args.put("url", Utils.decodeUrl(query.substring(urlIdx + 5)));
                     query = query.substring(0, urlIdx);
                 } else {
                     if (query.indexOf('#') != -1) {
