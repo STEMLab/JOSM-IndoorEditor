@@ -46,7 +46,7 @@ public class PesceImporter extends OsmImporter {
     private static String EXT2 = "pesce";
     public final static ExtensionFileFilter INDOOR_FILE_FILTER = new ExtensionFileFilter(
             String.format("%s,%s.gz,%s.bz2,%s", EXT, EXT, EXT, EXT2),
-            EXT, tr("IndoorGML files") + " (*."+EXT+"[.gz|.bz2])");
+            EXT, tr("IndoorGML files") + " (*."+EXT +"[.gz|.bz2])");
     private boolean isFirstType = true;
     
     static IndoorFeaturesType tempRoot; 

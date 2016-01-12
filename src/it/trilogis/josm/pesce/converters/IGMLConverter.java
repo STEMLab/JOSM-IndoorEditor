@@ -1,18 +1,14 @@
 package it.trilogis.josm.pesce.converters;
 
-import it.trilogis.josm.pesce.Constants;
-import it.trilogis.josm.pesce.IdsFactory;
-import it.trilogis.josm.pesce.Utils;
+import static it.trilogis.josm.pesce.Utils.strip;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
@@ -24,9 +20,24 @@ import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 
+import it.trilogis.josm.pesce.Constants;
+import it.trilogis.josm.pesce.IdsFactory;
+import it.trilogis.josm.pesce.Utils;
 import net.opengis.gml.v_3_2_1.AbstractCurveType;
-import net.opengis.indoorgml.v_1_0.core.*;
-import static it.trilogis.josm.pesce.Utils.*;
+import net.opengis.gml.v_3_2_1.CodeType;
+import net.opengis.gml.v_3_2_1.StringOrRefType;
+import net.opengis.indoorgml.v_1_0.core.EdgesType;
+import net.opengis.indoorgml.v_1_0.core.IndoorFeaturesType;
+import net.opengis.indoorgml.v_1_0.core.MultiLayeredGraphType;
+import net.opengis.indoorgml.v_1_0.core.NodesType;
+import net.opengis.indoorgml.v_1_0.core.SpaceLayerMemberType;
+import net.opengis.indoorgml.v_1_0.core.SpaceLayerType;
+import net.opengis.indoorgml.v_1_0.core.SpaceLayersType;
+import net.opengis.indoorgml.v_1_0.core.StateMemberType;
+import net.opengis.indoorgml.v_1_0.core.StatePropertyType;
+import net.opengis.indoorgml.v_1_0.core.StateType;
+import net.opengis.indoorgml.v_1_0.core.TransitionMemberType;
+import net.opengis.indoorgml.v_1_0.core.TransitionType;
 
 public class IGMLConverter {
     
@@ -122,10 +133,20 @@ public class IGMLConverter {
             for(StateMemberType node : type.getStateMember()) {
                 StateType state = node.getState();
                 System.out.println("State id: "+state.getId()); // used into Edges to identify states
-                String stateName = state.getDescription().getTitle();
-                if(null!=stateName) {
-                    System.out.println("stateName: "+stateName);
+                
+                //Get State Name
+                String stateName = null;
+                
+                List<CodeType> names = state.getName();
+                if(names.size() > 1) {
+                    stateName = names.get(0).getValue();
                 }
+                
+                if(stateName == null) {
+                    StringOrRefType des = state.getDescription();
+                    if(des != null) stateName = des.getTitle();
+                }
+                
                 boolean isAnchorNode = state.isIsAnchorNode();
                 boolean isDoor = state.isIsDoor();
                 // I don't read description
